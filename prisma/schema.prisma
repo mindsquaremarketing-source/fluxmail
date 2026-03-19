@@ -1,0 +1,31 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Store {
+  id          String    @id @default(cuid())
+  shopDomain  String    @unique
+  accessToken String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  contacts    Contact[]
+}
+
+model Contact {
+  id        String   @id @default(cuid())
+  storeId   String
+  store     Store    @relation(fields: [storeId], references: [id])
+  email     String
+  firstName String?
+  lastName  String?
+  status    String   @default("subscribed")
+  source    String   @default("shopify")
+  addedAt   DateTime @default(now())
+
+  @@unique([storeId, email])
+}
