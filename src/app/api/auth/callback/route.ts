@@ -21,15 +21,14 @@ export async function GET(req: NextRequest) {
       },
     })
 
-    const host = req.nextUrl.searchParams.get('host')
+    const host = req.nextUrl.searchParams.get('host') || ''
+    const shop = session.shop
+
     return NextResponse.redirect(
-      new URL(`/app/dashboard?shop=${session.shop}&host=${host}`, req.url)
+      `https://${shop}/admin/apps/fluxmail/app/dashboard`
     )
   } catch (error: any) {
     console.error('OAuth callback error:', error)
-    const shop = req.nextUrl.searchParams.get('shop')
-    return NextResponse.redirect(
-      new URL(`/api/auth?shop=${shop}`, req.url)
-    )
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
