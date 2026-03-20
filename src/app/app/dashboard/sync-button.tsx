@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 
-export function SyncButton({ shop }: { shop: string }) {
+export default function SyncButton({ shopDomain }: { shopDomain: string }) {
   const [syncing, setSyncing] = useState(false)
   const [result, setResult] = useState<string | null>(null)
 
@@ -14,7 +14,7 @@ export function SyncButton({ shop }: { shop: string }) {
       const res = await fetch('/api/sync/contacts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ shop }),
+        body: JSON.stringify({ shop: shopDomain }),
       })
 
       const data = await res.json()
@@ -35,7 +35,7 @@ export function SyncButton({ shop }: { shop: string }) {
     <div>
       <button
         onClick={handleSync}
-        disabled={syncing || !shop}
+        disabled={syncing || !shopDomain}
         style={{
           background: syncing ? '#666' : '#000',
           color: '#fff',
