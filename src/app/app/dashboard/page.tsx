@@ -1,12 +1,10 @@
-export default function DashboardPage() {
+export const dynamic = 'force-dynamic'
+
+export default function Dashboard() {
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-3xl font-bold">EmailWiz Pro Dashboard</h1>
-        <p className="mt-2 text-muted-foreground">
-          Shopify authentication successful. Welcome!
-        </p>
-      </div>
+    <div style={{ padding: '20px', fontFamily: 'Arial' }}>
+      <h1>Fluxmail Dashboard</h1>
+      <p>Welcome! OAuth working successfully.</p>
     </div>
-  );
+  )
 }
