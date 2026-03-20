@@ -29,3 +29,18 @@ model Contact {
 
   @@unique([storeId, email])
 }
+
+model Campaign {
+  id           String   @id @default(cuid())
+  storeId      String
+  name         String
+  subject      String   @default("")
+  htmlContent  String   @default("") @db.Text
+  status       String   @default("draft")
+  emailsSent   Int      @default(0)
+  opens        Int      @default(0)
+  clicks       Int      @default(0)
+  placedOrders Int      @default(0)
+  revenue      Float    @default(0)
+  createdAt    DateTime @default(now())
+}
