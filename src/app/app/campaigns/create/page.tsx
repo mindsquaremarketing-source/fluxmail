@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
 type Method = 'ai' | 'template' | null
@@ -28,9 +28,19 @@ export default function CreateCampaignPage() {
   const [startDate, setStartDate] = useState('')
   const [startTime, setStartTime] = useState('')
   const [hasEndDate, setHasEndDate] = useState(false)
+  const [productName, setProductName] = useState('')
+  const [productImage, setProductImage] = useState('')
+  const [products, setProducts] = useState<any[]>([])
   const [generating, setGenerating] = useState(false)
   const [generated, setGenerated] = useState<GeneratedCampaign | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetch('/api/products')
+      .then((res) => res.json())
+      .then((data) => setProducts(data.products || []))
+      .catch(() => setProducts([]))
+  }, [])
 
   const generateRandomCode = () => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
@@ -58,6 +68,8 @@ export default function CreateCampaignPage() {
           prompt: prompt,
           discountCode: discountCode,
           discountValue: discountValue,
+          productName: productName,
+          productImage: productImage,
         }),
       })
 
@@ -212,15 +224,51 @@ export default function CreateCampaignPage() {
                 </label>
                 <select
                   value={featuredProduct}
-                  onChange={(e) => setFeaturedProduct(e.target.value)}
+                  onChange={(e) => {
+                    setFeaturedProduct(e.target.value)
+                    const product = products.find((p: any) => String(p.id) === e.target.value)
+                    if (product) {
+                      setProductName(product.title)
+                      setProductImage(product.images?.[0]?.src || '')
+                    }
+                  }}
                   className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 >
                   <option value="">Select a {featureType}...</option>
-                  <option value="sample-1">Sample {featureType === 'product' ? 'Product' : 'Collection'} 1</option>
-                  <option value="sample-2">Sample {featureType === 'product' ? 'Product' : 'Collection'} 2</option>
+                  {products.map((p: any) => (
+                    <option key={p.id} value={p.id}>{p.title}</option>
+                  ))}
                 </select>
               </div>
             )}
+
+            {/* Product Details */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Product Name</label>
+              <input
+                type="text"
+                value={productName}
+                onChange={(e) => setProductName(e.target.value)}
+                placeholder="e.g. Summer Collection Tee"
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              />
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Product Image URL (optional)</label>
+              <input
+                type="text"
+                value={productImage}
+                onChange={(e) => setProductImage(e.target.value)}
+                placeholder="https://cdn.shopify.com/..."
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              />
+              {productImage && (
+                <div className="mt-2 rounded-lg overflow-hidden border border-gray-200 inline-block">
+                  <img src={productImage} alt="Product preview" className="h-20 w-auto object-cover" />
+                </div>
+              )}
+            </div>
 
             <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
               <h3 className="text-sm font-semibold text-gray-900 mb-4">Campaign Discount</h3>
