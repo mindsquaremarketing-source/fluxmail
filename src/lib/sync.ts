@@ -1,23 +1,18 @@
-import { prisma } from '@/lib/db'
+import { prisma } from './db'
 
-interface ShopifyCustomer {
-  id: number
-  email: string | null
-  first_name: string | null
-  last_name: string | null
-}
-
-export async function syncAllContacts(
-  storeId: string,
-  accessToken: string,
-  shopDomain: string
-) {
-  let url: string | null =
-    `https://${shopDomain}/admin/api/2025-01/customers.json?limit=250`
-
+export async function syncAllContacts(storeId: string, accessToken: string, shopDomain: string) {
+  let page = 1
+  let hasMore = true
   let totalSynced = 0
+  let pageInfo = null
 
-  while (url) {
+  const baseUrl = `https://${shopDomain}/admin/api/2024-01/customers.json`
+
+  while (hasMore) {
+    const url = pageInfo
+      ? `https://${shopDomain}/admin/api/2024-01/customers.json?limit=250&page_info=${pageInfo}`
+      : `${baseUrl}?limit=250`
+
     const response = await fetch(url, {
       headers: {
         'X-Shopify-Access-Token': accessToken,
@@ -26,48 +21,57 @@ export async function syncAllContacts(
     })
 
     if (!response.ok) {
-      throw new Error(`Shopify API error: ${response.status} ${response.statusText}`)
+      const errorText = await response.text()
+      throw new Error(`Shopify API error: ${response.status} ${response.statusText} - ${errorText}`)
     }
 
     const data = await response.json()
-    const customers: ShopifyCustomer[] = data.customers || []
+    const customers = data.customers || []
 
-    const contactsToUpsert = customers.filter((c) => c.email)
+    if (customers.length === 0) {
+      hasMore = false
+      break
+    }
 
-    for (const customer of contactsToUpsert) {
+    for (const customer of customers) {
       await prisma.contact.upsert({
         where: {
           storeId_email: {
             storeId,
-            email: customer.email!,
+            email: customer.email || `noemail_${customer.id}@placeholder.com`,
           },
         },
         update: {
           firstName: customer.first_name || null,
           lastName: customer.last_name || null,
+          status: customer.email_marketing_consent?.state === 'subscribed'
+            ? 'subscribed'
+            : 'not_subscribed',
         },
         create: {
           storeId,
-          email: customer.email!,
+          email: customer.email || `noemail_${customer.id}@placeholder.com`,
           firstName: customer.first_name || null,
           lastName: customer.last_name || null,
+          status: customer.email_marketing_consent?.state === 'subscribed'
+            ? 'subscribed'
+            : 'not_subscribed',
           source: 'shopify',
         },
       })
+      totalSynced++
     }
 
-    totalSynced += contactsToUpsert.length
-
-    // Handle pagination via Link header
-    const linkHeader = response.headers.get('link')
-    url = null
-    if (linkHeader) {
-      const nextMatch = linkHeader.match(/<([^>]+)>;\s*rel="next"/)
-      if (nextMatch) {
-        url = nextMatch[1]
-      }
+    // Check for next page
+    const linkHeader = response.headers.get('Link')
+    if (linkHeader && linkHeader.includes('rel="next"')) {
+      const match = linkHeader.match(/page_info=([^&>]+).*rel="next"/)
+      pageInfo = match ? match[1] : null
+      hasMore = !!pageInfo
+    } else {
+      hasMore = false
     }
   }
 
-  return { totalSynced }
+  return totalSynced
 }
