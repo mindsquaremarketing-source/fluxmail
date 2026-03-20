@@ -1,100 +1,62 @@
 export const dynamic = 'force-dynamic'
-
-import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY!,
-})
+const client = new Anthropic()
 
 export async function POST(req: NextRequest) {
   try {
     const { prompt, storeId, discountCode, discountValue } = await req.json()
 
-    if (!prompt) {
-      return NextResponse.json({ error: 'Missing prompt' }, { status: 400 })
-    }
-
-    // Get store
-    let store
-    if (storeId) {
-      store = await prisma.store.findUnique({ where: { id: storeId } })
-    } else {
-      store = await prisma.store.findFirst({ orderBy: { createdAt: 'desc' } })
-    }
-
-    if (!store) {
-      return NextResponse.json({ error: 'Store not found' }, { status: 404 })
-    }
-
-    const primaryColor = '#6C47FF'
-    const secondaryColor = '#FFFFFF'
-
-    const discountInfo = discountCode
-      ? `Include a discount code "${discountCode}" for ${discountValue}% off.`
-      : 'No discount code for this campaign.'
-
-    const message = await anthropic.messages.create({
+    const message = await client.messages.create({
       model: 'claude-sonnet-4-20250514',
-      max_tokens: 4096,
-      system: `You are an expert email marketer for Shopify stores. Generate a compelling promotional email campaign.
-Return ONLY valid JSON with these fields: subject, previewText, htmlBody
-Use these brand colors: primary: ${primaryColor}, secondary: ${secondaryColor}
-Make the email professional, engaging and conversion-focused.
-The htmlBody should be a complete, responsive HTML email with inline styles.
-Include a header with the store name, a hero section, body content, a CTA button, and a footer.
-Use the brand primary color (${primaryColor}) for buttons and accents.
-Keep the design clean and modern with good spacing.`,
+      max_tokens: 2000,
       messages: [
         {
           role: 'user',
-          content: `Generate an email campaign for the Shopify store "${store.shopDomain}".
+          content: `You are an expert email marketer for Shopify stores.
+Generate a promotional email campaign.
+Campaign brief: ${prompt}
+Discount code: ${discountCode || 'none'}
+Discount value: ${discountValue || '10'}%
 
-Campaign description: ${prompt}
-
-${discountInfo}
-
-Return only valid JSON: { "subject": "...", "previewText": "...", "htmlBody": "..." }`,
-        },
-      ],
+Return ONLY valid JSON with no markdown:
+{
+  "subject": "email subject line",
+  "previewText": "preview text",
+  "htmlBody": "complete HTML email body"
+}`
+        }
+      ]
     })
 
-    // Extract text content
-    const textBlock = message.content.find((b) => b.type === 'text')
-    if (!textBlock || textBlock.type !== 'text') {
-      throw new Error('No text response from AI')
-    }
+    const content = message.content[0]
+    if (!content || content.type !== 'text') throw new Error('Invalid response')
 
-    // Parse JSON from response (handle markdown code blocks)
-    let responseText = textBlock.text.trim()
-    if (responseText.startsWith('```')) {
-      responseText = responseText.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '')
-    }
+    const cleaned = content.text.replace(/```json|```/g, '').trim()
+    const campaign = JSON.parse(cleaned)
 
-    const generated = JSON.parse(responseText)
+    const store = await prisma.store.findFirst({
+      orderBy: { createdAt: 'desc' }
+    })
 
-    // Create campaign in database
-    const campaign = await prisma.campaign.create({
+    const saved = await prisma.campaign.create({
       data: {
-        storeId: store.id,
-        name: generated.subject,
-        subject: generated.subject,
-        htmlContent: generated.htmlBody,
+        storeId: store?.id || storeId,
+        name: `ai_based - ${new Date().toLocaleDateString()}`,
+        subject: campaign.subject,
+        htmlContent: campaign.htmlBody,
         status: 'draft',
-      },
+      }
     })
 
     return NextResponse.json({
       success: true,
-      campaign: {
-        id: campaign.id,
-        name: campaign.name,
-        subject: generated.subject,
-        previewText: generated.previewText,
-        htmlBody: generated.htmlBody,
-        status: campaign.status,
-      },
+      campaign: saved,
+      subject: campaign.subject,
+      previewText: campaign.previewText,
+      htmlBody: campaign.htmlBody,
     })
   } catch (error: any) {
     console.error('AI generation error:', error)
