@@ -16,6 +16,10 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: "frame-ancestors 'self' https://*.myshopify.com https://admin.shopify.com",
           },
+          {
+            key: 'Set-Cookie',
+            value: 'SameSite=None; Secure',
+          },
         ],
       },
     ]
