@@ -20,7 +20,9 @@ export default function SyncButton({ shopDomain }: { shopDomain: string }) {
       const data = await res.json()
 
       if (res.ok) {
-        setResult(`Synced ${data.totalSynced} contacts`)
+        const count = data.synced || data.count || 0
+        setResult(`✅ Synced ${count} contacts successfully!`)
+        setTimeout(() => window.location.reload(), 2000)
       } else {
         setResult(`Error: ${data.error}`)
       }
