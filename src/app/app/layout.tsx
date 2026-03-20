@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 
 const navItems = [
   { name: 'Dashboard', href: '/app/dashboard', icon: DashboardIcon },
-  { name: 'Flow Editor', href: '/app/flows', icon: FlowIcon },
+  { name: 'Flow Editor', href: '/app/flow-editor', icon: FlowIcon },
   { name: 'Campaigns', href: '/app/campaigns', icon: CampaignIcon },
   { name: 'Brand & Settings', href: '/app/settings', icon: SettingsIcon },
   { name: 'Contacts', href: '/app/contacts', icon: ContactsIcon },
