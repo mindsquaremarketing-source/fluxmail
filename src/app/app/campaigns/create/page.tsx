@@ -55,21 +55,30 @@ export default function CreateCampaignPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          prompt,
-          discountCode: discountMethod === 'code' ? discountCode : undefined,
-          discountValue: discountMethod === 'code' ? discountValue : undefined,
+          prompt: prompt,
+          discountCode: discountCode,
+          discountValue: discountValue,
         }),
       })
 
       const data = await res.json()
+      console.log('Response status:', res.status)
+      console.log('Response data:', data)
 
       if (!res.ok) {
-        throw new Error(data.error || 'Generation failed')
+        setError(data.error || 'Generation failed')
+        return
       }
 
-      setGenerated(data.campaign)
+      setGenerated({
+        id: data.campaign?.id || '',
+        subject: data.subject,
+        previewText: data.previewText,
+        htmlBody: data.htmlBody,
+      })
       setStep(3)
     } catch (err: any) {
+      console.error('Fetch error:', err)
       setError(err.message)
     } finally {
       setGenerating(false)
