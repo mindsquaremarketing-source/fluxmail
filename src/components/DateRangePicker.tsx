@@ -9,7 +9,8 @@ const presets = [
 ]
 
 function getDatesForPreset(preset: string) {
-  const today = new Date()
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   const end = new Date(today)
   let start = new Date(today)
 
@@ -46,7 +47,10 @@ function getDatesForPreset(preset: string) {
 }
 
 function formatDate(date: Date) {
-  return date.toISOString().split('T')[0]
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
 }
 
 function getDaysInMonth(year: number, month: number) {
@@ -69,7 +73,8 @@ export default function DateRangePicker({
 }) {
   const [open, setOpen] = useState(false)
   const [activePreset, setActivePreset] = useState(selectedRange)
-  const today = new Date()
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   const [leftMonth, setLeftMonth] = useState(today.getMonth() === 0 ? 11 : today.getMonth() - 1)
   const [leftYear, setLeftYear] = useState(today.getMonth() === 0 ? today.getFullYear() - 1 : today.getFullYear())
   const [rightMonth, setRightMonth] = useState(today.getMonth())
@@ -142,11 +147,13 @@ export default function DateRangePicker({
     }
 
     for (let d = 1; d <= days; d++) {
-      const date = new Date(year, month, d)
+      const date = new Date(year, month, d, 0, 0, 0, 0)
       const inRange = isInRange(date)
       const start = isStart(date)
       const end = isEnd(date)
-      const isToday = formatDate(date) === formatDate(today)
+      const isToday = date.getDate() === today.getDate() &&
+        date.getMonth() === today.getMonth() &&
+        date.getFullYear() === today.getFullYear()
       const isFuture = date > today
 
       cells.push(
