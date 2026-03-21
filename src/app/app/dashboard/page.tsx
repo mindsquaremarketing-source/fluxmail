@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import { prisma } from '@/lib/db'
 import Link from 'next/link'
+import DateRangePicker from './date-range-picker'
 
 interface Props {
   searchParams: { [key: string]: string | undefined }
@@ -64,12 +65,7 @@ export default async function Dashboard({ searchParams }: Props) {
             </svg>
             Create Campaign
           </Link>
-          <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
-          </svg>
-          Last 30 days
-          </button>
+          <DateRangePicker />
         </div>
       </div>
 
