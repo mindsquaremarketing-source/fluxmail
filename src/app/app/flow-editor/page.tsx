@@ -252,10 +252,31 @@ const triggerInfo: Record<string, { addedWhen: string; removedWhen: string }> = 
   },
 }
 
+const emailDelays: Record<string, string> = {
+  'welcome-1': 'On trigger',
+  'welcome-2': '48 hour(s) from previous',
+  'welcome-3': '72 hour(s) from previous',
+  'browse-1': '1 hour(s) from trigger',
+  'browse-2': '24 hour(s) from previous',
+  'checkout-1': '1 hour(s) from trigger',
+  'checkout-2': '24 hour(s) from previous',
+  'checkout-3': '48 hour(s) from previous',
+  'thankyou-1': 'On trigger',
+  'thankyou-2': '7 day(s) from previous',
+  'winback-1': 'On trigger',
+  'winback-2': '3 day(s) from previous',
+  'winback-3': '7 day(s) from previous',
+  'popup-1': 'On trigger',
+  'popup-2': 'On exit intent',
+}
+
 export default function FlowEditorPage() {
   const [expandedFlow, setExpandedFlow] = useState<string>('Welcome Flow')
   const [selectedEmail, setSelectedEmail] = useState<FlowEmail>(flows[0].emails[0])
   const [onlyNewContacts, setOnlyNewContacts] = useState(true)
+  const [showEditMenu, setShowEditMenu] = useState(false)
+  const [showSubjectEditor, setShowSubjectEditor] = useState(false)
+  const [showTemplateEditor, setShowTemplateEditor] = useState(false)
 
   const toggleFlow = (flowName: string) => {
     setExpandedFlow(expandedFlow === flowName ? '' : flowName)
@@ -267,13 +288,38 @@ export default function FlowEditorPage() {
 
   const currentTrigger = triggerInfo[expandedFlow] || triggerInfo['Welcome Flow']
 
+  const handleSendTestEmail = async () => {
+    const email = prompt('Enter your email address to receive the test:')
+    if (!email) return
+
+    try {
+      const res = await fetch('/api/flow-emails/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: email,
+          subject: selectedEmail.subject,
+          html: `<div style="max-width:600px;margin:0 auto;font-family:Arial,sans-serif"><div style="text-align:center;padding:24px;border-bottom:1px solid #eee"><strong style="font-size:20px;color:#1E40AF">Fluxmail</strong></div><div style="padding:48px 32px;text-align:center;background:${selectedEmail.heroColor}"><h1 style="color:white;margin:0 0 12px">${selectedEmail.heading}</h1><p style="color:rgba(255,255,255,0.9);font-size:14px">${selectedEmail.body}</p></div><div style="padding:32px;text-align:center"><p style="font-size:14px;color:#374151">${selectedEmail.cta}</p>${selectedEmail.ctaCode ? `<div style="display:inline-block;border:2px dashed #93c5fd;border-radius:8px;padding:12px 24px;margin:16px 0;background:#eff6ff"><p style="font-size:10px;color:#6b7280;text-transform:uppercase;margin:0 0 4px">Use Code</p><p style="font-size:18px;font-weight:bold;color:#1E40AF;letter-spacing:2px;margin:0">${selectedEmail.ctaCode}</p></div>` : ''}<br><a href="#" style="display:inline-block;padding:12px 32px;background:${selectedEmail.heroColor};color:white;border-radius:8px;text-decoration:none;font-size:14px;font-weight:500">${selectedEmail.ctaCode ? 'Shop Now' : selectedEmail.cta}</a></div><div style="padding:16px;text-align:center;background:#f9fafb;border-top:1px solid #f3f4f6"><p style="font-size:11px;color:#9ca3af;margin:0">Sent via Fluxmail</p></div></div>`,
+        }),
+      })
+      if (res.ok) {
+        alert(`Test email sent to ${email}!`)
+      } else {
+        const data = await res.json()
+        alert(`Failed: ${data.error}`)
+      }
+    } catch (error) {
+      alert('Failed to send test email')
+    }
+  }
+
   return (
     <div className="flex h-[calc(100vh-0px)] bg-gray-50">
       {/* Left Panel - Flow Selector */}
       <div className="w-[35%] border-r border-gray-200 bg-white overflow-y-auto">
         <div className="px-5 py-4 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900">Flow Editor</h2>
-          <p className="text-xs text-gray-500 mt-1">Select a flow and email to preview</p>
+          <p className="text-xs text-gray-500 mt-1">View and edit your flows, emails, and pop-ups.</p>
         </div>
 
         {/* Flow Accordion */}
@@ -301,8 +347,9 @@ export default function FlowEditorPage() {
                   </svg>
                   <span className="text-sm font-medium text-gray-900">{flow.name}</span>
                 </div>
-                <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
-                  {flow.emails.length} {flow.emails.length === 1 ? 'email' : 'emails'}
+                <span className="flex items-center gap-1.5 text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                  {flow.emails.length} of {flow.emails.length}
                 </span>
               </button>
 
@@ -319,9 +366,12 @@ export default function FlowEditorPage() {
                           : 'hover:bg-gray-100 border-l-2 border-transparent'
                       }`}
                     >
-                      <span className={`text-sm ${selectedEmail.id === email.id ? 'text-blue-700 font-medium' : 'text-gray-700'}`}>
-                        {email.name}
-                      </span>
+                      <div>
+                        <span className={`text-sm ${selectedEmail.id === email.id ? 'text-blue-700 font-medium' : 'text-gray-700'}`}>
+                          {email.name}
+                        </span>
+                        <p className="text-[10px] text-gray-400 mt-0.5">Delay: {emailDelays[email.id] || 'On trigger'}</p>
+                      </div>
                       <div className="flex items-center gap-2">
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-50 text-green-700">
                           <span className="w-1 h-1 rounded-full bg-green-500"></span>
@@ -384,35 +434,75 @@ export default function FlowEditorPage() {
               Active
             </span>
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-            </svg>
-            Edit Email
-          </button>
+          <div className="relative">
+            <button
+              onClick={() => setShowEditMenu(!showEditMenu)}
+              className="flex items-center gap-2 bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-800"
+            >
+              Edit
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            {showEditMenu && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowEditMenu(false)} />
+                <div className="absolute right-0 top-10 bg-white border border-gray-200 rounded-lg shadow-lg z-50 w-64 py-1">
+                  <button
+                    onClick={() => { setShowEditMenu(false); setShowSubjectEditor(true) }}
+                    className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Edit Subject Line &amp; Preview Text
+                  </button>
+                  <button
+                    onClick={() => { setShowEditMenu(false); setShowTemplateEditor(true) }}
+                    className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+                    </svg>
+                    Edit Email Template
+                  </button>
+                  <div className="border-t border-gray-100 my-1" />
+                  <button
+                    onClick={() => { setShowEditMenu(false); handleSendTestEmail() }}
+                    className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                    </svg>
+                    Send Test Email
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
         {/* Email Meta */}
-        <div className="bg-white rounded-xl border border-gray-200 mb-6">
+        <div className="bg-white rounded-xl border border-gray-200 mb-6 shadow-sm">
           <div className="divide-y divide-gray-100">
             <div className="flex px-5 py-3">
               <span className="text-sm text-gray-500 w-28">From</span>
-              <span className="text-sm text-gray-900">{selectedEmail.from}</span>
+              <span className="text-sm text-gray-700">{selectedEmail.from}</span>
             </div>
             <div className="flex px-5 py-3">
               <span className="text-sm text-gray-500 w-28">Subject Line</span>
-              <span className="text-sm text-gray-900">{selectedEmail.subject}</span>
+              <span className="text-sm font-semibold text-gray-900">{selectedEmail.subject}</span>
             </div>
             <div className="flex px-5 py-3">
               <span className="text-sm text-gray-500 w-28">Preview Text</span>
-              <span className="text-sm text-gray-900">{selectedEmail.previewText}</span>
+              <span className="text-sm text-gray-500 italic">{selectedEmail.previewText}</span>
             </div>
           </div>
         </div>
 
         {/* Email Preview */}
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
           <div className="px-5 py-3 border-b border-gray-200 bg-gray-50">
             <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Email Preview</span>
           </div>
@@ -463,6 +553,86 @@ export default function FlowEditorPage() {
           </div>
         </div>
       </div>
+
+      {/* Subject Line Editor Modal */}
+      {showSubjectEditor && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+          <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-lg">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-900">Edit Subject Line &amp; Preview Text</h2>
+              <button onClick={() => setShowSubjectEditor(false)} className="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700 block mb-1">Subject Line</label>
+                <input
+                  type="text"
+                  defaultValue={selectedEmail.subject}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter subject line..."
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 block mb-1">Preview Text</label>
+                <input
+                  type="text"
+                  defaultValue={selectedEmail.previewText}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter preview text..."
+                />
+                <p className="text-xs text-gray-400 mt-1">Shown in inbox before opening the email</p>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 mt-6">
+              <button onClick={() => setShowSubjectEditor(false)} className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
+              <button onClick={() => setShowSubjectEditor(false)} className="px-4 py-2 text-sm bg-blue-700 text-white rounded-lg hover:bg-blue-800">Save Changes</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Template Editor Modal */}
+      {showTemplateEditor && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+          <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-900">Edit Email Template</h2>
+              <button onClick={() => setShowTemplateEditor(false)} className="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700 block mb-1">Heading</label>
+                <input type="text" defaultValue={selectedEmail.heading} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 block mb-1">Body Text</label>
+                <textarea defaultValue={selectedEmail.body} rows={3} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none" />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 block mb-1">CTA Button Text</label>
+                <input type="text" defaultValue={selectedEmail.cta} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+              </div>
+              {selectedEmail.ctaCode && (
+                <div>
+                  <label className="text-sm font-medium text-gray-700 block mb-1">Discount Code</label>
+                  <input type="text" defaultValue={selectedEmail.ctaCode} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                </div>
+              )}
+              <div>
+                <label className="text-sm font-medium text-gray-700 block mb-1">Hero Color</label>
+                <div className="flex items-center gap-2">
+                  <input type="color" defaultValue={selectedEmail.heroColor} className="w-10 h-10 rounded border border-gray-200 cursor-pointer p-0.5" />
+                  <input type="text" defaultValue={selectedEmail.heroColor} className="w-28 border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 mt-6">
+              <button onClick={() => setShowTemplateEditor(false)} className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
+              <button onClick={() => setShowTemplateEditor(false)} className="px-4 py-2 text-sm bg-blue-700 text-white rounded-lg hover:bg-blue-800">Save Changes</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
