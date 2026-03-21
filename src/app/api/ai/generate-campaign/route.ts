@@ -16,6 +16,13 @@ export async function POST(req: NextRequest) {
     const primaryColor = '#6C47FF'
     const storeName = store?.shopDomain?.replace('.myshopify.com', '') || 'Our Store'
 
+    // Auto-generate image URL if none provided
+    let imageUrl = productImage
+    if (!imageUrl) {
+      const imageSearch = productName || prompt.split(' ').slice(0, 3).join(' ')
+      imageUrl = `https://source.unsplash.com/600x400/?${encodeURIComponent(imageSearch)}`
+    }
+
     const message = await client.messages.create({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 4000,
@@ -28,7 +35,7 @@ Campaign brief: ${prompt}
 Store name: ${storeName}
 Primary brand color: ${primaryColor}
 Product name: ${productName || 'Featured Product'}
-Product image URL: ${productImage || 'https://via.placeholder.com/600x400/6C47FF/FFFFFF?text=Featured+Product'}
+Product image URL: ${imageUrl}
 Discount code: ${discountCode || ''}
 Discount value: ${discountValue || '10'}%
 

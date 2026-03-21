@@ -242,33 +242,20 @@ export default function CreateCampaignPage() {
               </div>
             )}
 
-            {/* Product Details */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Product Name</label>
-              <input
-                type="text"
-                value={productName}
-                onChange={(e) => setProductName(e.target.value)}
-                placeholder="e.g. Summer Collection Tee"
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              />
-            </div>
-
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Product Image URL (optional)</label>
-              <input
-                type="text"
-                value={productImage}
-                onChange={(e) => setProductImage(e.target.value)}
-                placeholder="https://cdn.shopify.com/..."
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              />
-              {productImage && (
-                <div className="mt-2 rounded-lg overflow-hidden border border-gray-200 inline-block">
-                  <img src={productImage} alt="Product preview" className="h-20 w-auto object-cover" />
+            {/* Selected Product Preview */}
+            {productName && (
+              <div className="mb-6 bg-gray-50 rounded-lg p-4 flex items-center gap-4">
+                {productImage && (
+                  <div className="rounded-lg overflow-hidden border border-gray-200 flex-shrink-0">
+                    <img src={productImage} alt={productName} className="h-16 w-16 object-cover" />
+                  </div>
+                )}
+                <div>
+                  <p className="text-sm font-medium text-gray-900">{productName}</p>
+                  <p className="text-xs text-gray-500">Selected from your Shopify store</p>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
 
             <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
               <h3 className="text-sm font-semibold text-gray-900 mb-4">Campaign Discount</h3>
