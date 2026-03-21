@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import { prisma } from '@/lib/db'
 import Link from 'next/link'
-import DateRangePicker from './date-range-picker'
+import DateRangePicker from '@/components/DateRangePicker'
 
 interface Props {
   searchParams: { [key: string]: string | undefined }
@@ -65,7 +65,7 @@ export default async function Dashboard({ searchParams }: Props) {
             </svg>
             Create Campaign
           </Link>
-          <DateRangePicker />
+          <DateRangePicker selectedRange="Last 30 days" onSave={() => {}} />
         </div>
       </div>
 
