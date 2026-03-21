@@ -34,6 +34,32 @@ export default function CreateCampaignPage() {
   const [generating, setGenerating] = useState(false)
   const [generated, setGenerated] = useState<GeneratedCampaign | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [loadingStep, setLoadingStep] = useState(0)
+  const loadingIntervalRef = useRef<NodeJS.Timeout | null>(null)
+
+  const loadingSteps = [
+    'Analyzing your campaign brief...',
+    'Designing email layout...',
+    'Writing compelling copy...',
+    'Adding finishing touches...',
+  ]
+
+  const startLoadingAnimation = () => {
+    setLoadingStep(0)
+    loadingIntervalRef.current = setInterval(() => {
+      setLoadingStep((prev) => {
+        if (prev >= 3) return prev
+        return prev + 1
+      })
+    }, 2000)
+  }
+
+  const stopLoadingAnimation = () => {
+    if (loadingIntervalRef.current) {
+      clearInterval(loadingIntervalRef.current)
+      loadingIntervalRef.current = null
+    }
+  }
 
   useEffect(() => {
     fetch('/api/products')
@@ -59,6 +85,7 @@ export default function CreateCampaignPage() {
 
     setGenerating(true)
     setError(null)
+    startLoadingAnimation()
 
     try {
       const res = await fetch('/api/ai/generate-campaign', {
@@ -93,6 +120,7 @@ export default function CreateCampaignPage() {
       console.error('Fetch error:', err)
       setError(err.message)
     } finally {
+      stopLoadingAnimation()
       setGenerating(false)
     }
   }
@@ -307,6 +335,33 @@ export default function CreateCampaignPage() {
             {error && (
               <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
                 {error}
+              </div>
+            )}
+
+            {/* Loading Steps */}
+            {generating && (
+              <div className="mb-6 bg-white rounded-xl border border-gray-200 p-6">
+                <div className="space-y-3">
+                  {loadingSteps.map((stepText, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      {i < loadingStep ? (
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      ) : i === loadingStep ? (
+                        <svg className="animate-spin h-[18px] w-[18px] text-purple-600" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                      ) : (
+                        <div className="w-[18px] h-[18px] rounded-full border-2 border-gray-200"></div>
+                      )}
+                      <span className={`text-sm ${i < loadingStep ? 'text-green-700' : i === loadingStep ? 'text-purple-700 font-medium' : 'text-gray-400'}`}>
+                        {stepText}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 

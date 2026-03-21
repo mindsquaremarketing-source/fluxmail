@@ -16,53 +16,27 @@ export async function POST(req: NextRequest) {
     const primaryColor = '#6C47FF'
     const storeName = store?.shopDomain?.replace('.myshopify.com', '') || 'Our Store'
 
-    // Auto-generate image URL if none provided
-    let imageUrl = productImage
-    if (!imageUrl) {
-      const imageSearch = productName || prompt.split(' ').slice(0, 3).join(' ')
-      imageUrl = `https://source.unsplash.com/600x400/?${encodeURIComponent(imageSearch)}`
-    }
-
+    // Use smaller, faster model with less tokens
     const message = await client.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 4000,
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 2000,
       messages: [
         {
           role: 'user',
-          content: `You are an expert email designer creating beautiful, high-converting Shopify email campaigns.
+          content: `You are an expert email marketer. Create a promotional email.
 
-Campaign brief: ${prompt}
-Store name: ${storeName}
-Primary brand color: ${primaryColor}
-Product name: ${productName || 'Featured Product'}
-Product image URL: ${imageUrl}
-Discount code: ${discountCode || ''}
-Discount value: ${discountValue || '10'}%
+Store: ${storeName}
+Brand color: ${primaryColor}
+Product: ${productName || 'Featured Product'}
+Image: ${productImage || `https://source.unsplash.com/600x400/?${encodeURIComponent(productName || 'product')}`}
+Brief: ${prompt}
+Discount: ${discountCode ? `Code ${discountCode} for ${discountValue}% off` : 'No discount'}
 
-Create a stunning, professional HTML email with:
-1. Clean modern design with brand colors
-2. Header with store name and logo area
-3. Hero section with large product image
-4. Compelling headline and subheadline
-5. Product showcase with description
-6. Big discount/offer section if discount provided
-7. Clear CTA button in brand color
-8. Professional footer with unsubscribe link
-
-Use these design principles:
-- Use ${primaryColor} as the main color for buttons and accents
-- Clean white background with subtle gray sections
-- Professional typography (font-family: Arial, sans-serif)
-- Mobile-responsive using inline styles and max-width: 600px
-- Attractive product image display
-- Urgency elements like "Limited Time Offer"
-- Social proof elements
-
-Return ONLY valid JSON with no markdown backticks:
+Return ONLY valid JSON (no markdown):
 {
-  "subject": "compelling subject line with emoji",
-  "previewText": "preview text under 100 chars",
-  "htmlBody": "complete beautiful HTML email"
+  "subject": "subject line with emoji",
+  "previewText": "preview under 100 chars",
+  "htmlBody": "complete HTML email with inline styles, max-width 600px, brand color ${primaryColor} for buttons, product image, compelling copy, CTA button"
 }`
         }
       ]
