@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 interface FlowEmail {
   id: string
@@ -271,6 +272,7 @@ const emailDelays: Record<string, string> = {
 }
 
 export default function FlowEditorPage() {
+  const router = useRouter()
   const [expandedFlow, setExpandedFlow] = useState<string>('Welcome Flow')
   const [selectedEmail, setSelectedEmail] = useState<FlowEmail>(flows[0].emails[0])
   const [onlyNewContacts, setOnlyNewContacts] = useState(true)
@@ -459,7 +461,7 @@ export default function FlowEditorPage() {
                     Edit Subject Line &amp; Preview Text
                   </button>
                   <button
-                    onClick={() => { setShowEditMenu(false); setShowTemplateEditor(true) }}
+                    onClick={() => { setShowEditMenu(false); router.push('/app/flow-editor/email-editor') }}
                     className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
