@@ -154,7 +154,7 @@ export default function CreateCampaignPage() {
         </div>
         <div className="flex items-center gap-2">
           {[1, 2, 3].slice(0, stepCount).map((s) => (
-            <span key={s} className={`w-2.5 h-2.5 rounded-full ${step >= s ? 'bg-purple-600' : 'bg-gray-300'}`}></span>
+            <span key={s} className={`w-2.5 h-2.5 rounded-full ${step >= s ? 'bg-blue-600' : 'bg-gray-300'}`}></span>
           ))}
         </div>
       </div>
@@ -170,30 +170,30 @@ export default function CreateCampaignPage() {
               <button
                 onClick={() => setMethod('ai')}
                 className={`flex flex-col items-center gap-3 p-8 rounded-xl border-2 transition-all ${
-                  method === 'ai' ? 'border-purple-600 bg-purple-50' : 'border-gray-200 bg-white hover:border-gray-300'
+                  method === 'ai' ? 'border-blue-600 bg-blue-50' : 'border-gray-200 bg-white hover:border-gray-300'
                 }`}
               >
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${method === 'ai' ? 'bg-purple-100' : 'bg-gray-100'}`}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill={method === 'ai' ? '#7c3aed' : '#6b7280'}>
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${method === 'ai' ? 'bg-blue-100' : 'bg-gray-100'}`}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill={method === 'ai' ? '#1E40AF' : '#6b7280'}>
                     <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
                   </svg>
                 </div>
-                <span className={`text-sm font-medium ${method === 'ai' ? 'text-purple-700' : 'text-gray-700'}`}>Generate with AI</span>
+                <span className={`text-sm font-medium ${method === 'ai' ? 'text-blue-700' : 'text-gray-700'}`}>Generate with AI</span>
                 <span className="text-xs text-gray-400">Let AI create your campaign</span>
               </button>
 
               <button
                 onClick={() => setMethod('template')}
                 className={`flex flex-col items-center gap-3 p-8 rounded-xl border-2 transition-all ${
-                  method === 'template' ? 'border-purple-600 bg-purple-50' : 'border-gray-200 bg-white hover:border-gray-300'
+                  method === 'template' ? 'border-blue-600 bg-blue-50' : 'border-gray-200 bg-white hover:border-gray-300'
                 }`}
               >
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${method === 'template' ? 'bg-purple-100' : 'bg-gray-100'}`}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={method === 'template' ? '#7c3aed' : '#6b7280'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${method === 'template' ? 'bg-blue-100' : 'bg-gray-100'}`}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={method === 'template' ? '#1E40AF' : '#6b7280'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><line x1="3" y1="9" x2="21" y2="9" /><line x1="9" y1="21" x2="9" y2="9" />
                   </svg>
                 </div>
-                <span className={`text-sm font-medium ${method === 'template' ? 'text-purple-700' : 'text-gray-700'}`}>Start from template</span>
+                <span className={`text-sm font-medium ${method === 'template' ? 'text-blue-700' : 'text-gray-700'}`}>Start from template</span>
                 <span className="text-xs text-gray-400">Choose from pre-built designs</span>
               </button>
             </div>
@@ -224,7 +224,7 @@ export default function CreateCampaignPage() {
                 onChange={(e) => setPrompt(e.target.value)}
                 placeholder="Example: a campaign to promote our new collection with a 15% discount for loyal customers"
                 rows={4}
-                className="w-full px-4 py-3 border-2 border-purple-200 rounded-xl text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 resize-none"
+                className="w-full px-4 py-3 border-2 border-blue-200 rounded-xl text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
               />
             </div>
 
@@ -236,7 +236,7 @@ export default function CreateCampaignPage() {
                     key={type}
                     onClick={() => setFeatureType(type)}
                     className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors ${
-                      featureType === type ? 'bg-purple-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
+                      featureType === type ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
                     }`}
                   >
                     {type === 'product' ? 'Product' : type === 'collection' ? 'Collection' : 'All Products'}
@@ -260,7 +260,7 @@ export default function CreateCampaignPage() {
                       setProductImage(product.images?.[0]?.src || '')
                     }
                   }}
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="">Select a {featureType}...</option>
                   {products.map((p: any) => (
@@ -300,14 +300,14 @@ export default function CreateCampaignPage() {
                   <div className="mb-4">
                     <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Discount Code</label>
                     <div className="flex items-center gap-3">
-                      <input type="text" value={discountCode} onChange={(e) => setDiscountCode(e.target.value.toUpperCase())} placeholder="e.g. SAVE10" className="flex-1 px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
-                      <button onClick={generateRandomCode} className="text-sm text-purple-600 hover:text-purple-700 font-medium whitespace-nowrap">Generate random code</button>
+                      <input type="text" value={discountCode} onChange={(e) => setDiscountCode(e.target.value.toUpperCase())} placeholder="e.g. SAVE10" className="flex-1 px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                      <button onClick={generateRandomCode} className="text-sm text-blue-600 hover:text-blue-700 font-medium whitespace-nowrap">Generate random code</button>
                     </div>
                   </div>
                   <div className="mb-4">
                     <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Discount Value</label>
                     <div className="relative w-32">
-                      <input type="number" value={discountValue} onChange={(e) => setDiscountValue(e.target.value)} className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent pr-8" />
+                      <input type="number" value={discountValue} onChange={(e) => setDiscountValue(e.target.value)} className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-8" />
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">%</span>
                     </div>
                   </div>
@@ -316,15 +316,15 @@ export default function CreateCampaignPage() {
                     <div className="grid grid-cols-2 gap-3 mb-3">
                       <div>
                         <label className="block text-xs text-gray-500 mb-1">Start date</label>
-                        <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+                        <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                       </div>
                       <div>
                         <label className="block text-xs text-gray-500 mb-1">Start time</label>
-                        <input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+                        <input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                       </div>
                     </div>
                     <label className="flex items-center gap-2 cursor-pointer">
-                      <input type="checkbox" checked={hasEndDate} onChange={(e) => setHasEndDate(e.target.checked)} className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500" />
+                      <input type="checkbox" checked={hasEndDate} onChange={(e) => setHasEndDate(e.target.checked)} className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
                       <span className="text-sm text-gray-700">Set end date</span>
                     </label>
                   </div>
@@ -349,14 +349,14 @@ export default function CreateCampaignPage() {
                           <polyline points="20 6 9 17 4 12" />
                         </svg>
                       ) : i === loadingStep ? (
-                        <svg className="animate-spin h-[18px] w-[18px] text-purple-600" viewBox="0 0 24 24">
+                        <svg className="animate-spin h-[18px] w-[18px] text-blue-600" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                         </svg>
                       ) : (
                         <div className="w-[18px] h-[18px] rounded-full border-2 border-gray-200"></div>
                       )}
-                      <span className={`text-sm ${i < loadingStep ? 'text-green-700' : i === loadingStep ? 'text-purple-700 font-medium' : 'text-gray-400'}`}>
+                      <span className={`text-sm ${i < loadingStep ? 'text-green-700' : i === loadingStep ? 'text-blue-700 font-medium' : 'text-gray-400'}`}>
                         {stepText}
                       </span>
                     </div>

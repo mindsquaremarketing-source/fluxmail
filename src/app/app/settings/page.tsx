@@ -16,7 +16,7 @@ export default function SettingsPage() {
 
   // Colors
   const [colors, setColors] = useState({
-    primary: '#6C47FF',
+    primary: '#1E40AF',
     primaryText: '#FFFFFF',
     secondary: '#FFFFFF',
     secondaryText: '#000000',
@@ -58,21 +58,21 @@ export default function SettingsPage() {
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">First name</label>
-              <input type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="John" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+              <input type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="John" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Last name</label>
-              <input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Doe" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+              <input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Doe" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4 mb-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="john@example.com" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="john@example.com" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone number</label>
-              <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1 (555) 000-0000" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+              <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1 (555) 000-0000" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
             </div>
           </div>
           <div className="flex justify-end">
@@ -98,7 +98,7 @@ export default function SettingsPage() {
                 </svg>
               </div>
               <div className="flex gap-2">
-                <button className="px-4 py-2 text-sm font-medium text-purple-600 border border-purple-200 rounded-lg hover:bg-purple-50 transition-colors">Edit</button>
+                <button className="px-4 py-2 text-sm font-medium text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors">Edit</button>
                 <button className="px-4 py-2 text-sm font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">Remove</button>
               </div>
             </div>
@@ -107,7 +107,7 @@ export default function SettingsPage() {
           {/* Language */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Language</label>
-            <select value={language} onChange={(e) => setLanguage(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+            <select value={language} onChange={(e) => setLanguage(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
               <option value="english">English</option>
               <option value="spanish">Spanish</option>
               <option value="french">French</option>
@@ -119,7 +119,7 @@ export default function SettingsPage() {
           {/* Font Family */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Font Family</label>
-            <select value={fontFamily} onChange={(e) => setFontFamily(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+            <select value={fontFamily} onChange={(e) => setFontFamily(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
               <option value="Arial">Arial</option>
               <option value="Georgia">Georgia</option>
               <option value="Verdana">Verdana</option>
@@ -133,13 +133,13 @@ export default function SettingsPage() {
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-2">Button Shape</label>
             <div className="flex gap-3">
-              <button onClick={() => setButtonShape('square')} className={`w-24 h-10 border-2 text-xs font-medium transition-all rounded-none ${buttonShape === 'square' ? 'border-purple-600 bg-purple-50 text-purple-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>
+              <button onClick={() => setButtonShape('square')} className={`w-24 h-10 border-2 text-xs font-medium transition-all rounded-none ${buttonShape === 'square' ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>
                 Square
               </button>
-              <button onClick={() => setButtonShape('rounded')} className={`w-24 h-10 border-2 text-xs font-medium transition-all rounded-lg ${buttonShape === 'rounded' ? 'border-purple-600 bg-purple-50 text-purple-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>
+              <button onClick={() => setButtonShape('rounded')} className={`w-24 h-10 border-2 text-xs font-medium transition-all rounded-lg ${buttonShape === 'rounded' ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>
                 Rounded
               </button>
-              <button onClick={() => setButtonShape('pill')} className={`w-24 h-10 border-2 text-xs font-medium transition-all rounded-full ${buttonShape === 'pill' ? 'border-purple-600 bg-purple-50 text-purple-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>
+              <button onClick={() => setButtonShape('pill')} className={`w-24 h-10 border-2 text-xs font-medium transition-all rounded-full ${buttonShape === 'pill' ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>
                 Pill
               </button>
             </div>
@@ -181,14 +181,14 @@ export default function SettingsPage() {
                     type="text"
                     value={colors[color.key]}
                     onChange={(e) => updateColor(color.key, e.target.value)}
-                    className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 font-mono focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
               </div>
             ))}
           </div>
           <div className="flex items-center justify-between">
-            <button className="text-sm text-purple-600 hover:text-purple-700 font-medium">Regenerate Flows</button>
+            <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">Regenerate Flows</button>
             <button className="px-5 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors">Save</button>
           </div>
         </div>
@@ -211,7 +211,7 @@ export default function SettingsPage() {
                 value={productSearch}
                 onChange={(e) => setProductSearch(e.target.value)}
                 placeholder="Search products..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
             <button className="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">Browse</button>
@@ -235,36 +235,36 @@ export default function SettingsPage() {
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Company name</label>
-              <input type="text" value={company} onChange={(e) => setCompany(e.target.value)} placeholder="Your Company" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+              <input type="text" value={company} onChange={(e) => setCompany(e.target.value)} placeholder="Your Company" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Website</label>
-              <input type="url" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://yourstore.com" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+              <input type="url" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://yourstore.com" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Country</label>
-              <input type="text" value={country} onChange={(e) => setCountry(e.target.value)} placeholder="United States" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+              <input type="text" value={country} onChange={(e) => setCountry(e.target.value)} placeholder="United States" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">State</label>
-              <input type="text" value={state} onChange={(e) => setState(e.target.value)} placeholder="California" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+              <input type="text" value={state} onChange={(e) => setState(e.target.value)} placeholder="California" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">City</label>
-              <input type="text" value={city} onChange={(e) => setCity(e.target.value)} placeholder="San Francisco" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+              <input type="text" value={city} onChange={(e) => setCity(e.target.value)} placeholder="San Francisco" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Zip code</label>
-              <input type="text" value={zip} onChange={(e) => setZip(e.target.value)} placeholder="94105" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+              <input type="text" value={zip} onChange={(e) => setZip(e.target.value)} placeholder="94105" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
             </div>
           </div>
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Address</label>
-            <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="123 Market Street" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+            <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="123 Market Street" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
           </div>
           <p className="text-xs text-gray-400 mb-4">Your physical address is required by the CAN-SPAM Act and will appear in the footer of all marketing emails.</p>
           <div className="flex justify-end">
@@ -282,7 +282,7 @@ export default function SettingsPage() {
         <div className="w-2/3 bg-white rounded-xl border border-gray-200 p-6">
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Sender name</label>
-            <input type="text" value={senderName} onChange={(e) => setSenderName(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+            <input type="text" value={senderName} onChange={(e) => setSenderName(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
           </div>
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Root Domain</label>
@@ -298,7 +298,7 @@ export default function SettingsPage() {
           </div>
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Reply-to email</label>
-            <input type="email" value={replyTo} onChange={(e) => setReplyTo(e.target.value)} placeholder="support@yourstore.com" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+            <input type="email" value={replyTo} onChange={(e) => setReplyTo(e.target.value)} placeholder="support@yourstore.com" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
           </div>
           <p className="text-xs text-gray-400 mb-4">To change your sending domain, please contact support.</p>
           <div className="flex justify-end">
@@ -317,7 +317,7 @@ export default function SettingsPage() {
           <div className="space-y-4">
             <div className="flex items-center justify-between py-3 border-b border-gray-100">
               <span className="text-sm text-gray-600">Plan</span>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-700">Pro AI</span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">Pro AI</span>
             </div>
             <div className="flex items-center justify-between py-3 border-b border-gray-100">
               <span className="text-sm text-gray-600">Active Contacts</span>
@@ -328,7 +328,7 @@ export default function SettingsPage() {
               <span className="text-sm font-semibold text-gray-900">0</span>
             </div>
             <div className="pt-2">
-              <button className="text-sm text-purple-600 hover:text-purple-700 font-medium">View pricing scale →</button>
+              <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">View pricing scale →</button>
             </div>
           </div>
         </div>

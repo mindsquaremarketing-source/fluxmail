@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
       orderBy: { createdAt: 'desc' }
     })
 
-    const primaryColor = '#6C47FF'
+    const primaryColor = '#1E40AF'
     const storeName = store?.shopDomain?.replace('.myshopify.com', '') || 'Our Store'
 
     // Use smaller, faster model with less tokens

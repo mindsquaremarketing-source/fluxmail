@@ -30,7 +30,7 @@ const flows: Flow[] = [
         subject: 'Welcome to Fluxmail! 🎉',
         previewText: 'Your welcome gift awaits',
         from: 'Fluxmail <contact@fluxmail.com>',
-        heroColor: '#7c3aed',
+        heroColor: '#1E40AF',
         heading: 'Welcome to Fluxmail',
         body: "We're thrilled to have you! As a thank you for joining, here's an exclusive discount on your next order.",
         cta: "Here's 10% Off your next order",
@@ -203,7 +203,7 @@ const flows: Flow[] = [
         subject: 'Pop-up Configuration',
         previewText: 'Shown to new visitors',
         from: 'System',
-        heroColor: '#7c3aed',
+        heroColor: '#1E40AF',
         heading: 'Get 10% Off',
         body: 'Sign up for our newsletter and get 10% off your first order. Join thousands of happy customers!',
         cta: 'Subscribe & Save',
@@ -315,11 +315,11 @@ export default function FlowEditorPage() {
                       onClick={() => selectEmail(email)}
                       className={`w-full flex items-center justify-between px-5 pl-12 py-3 text-left transition-colors ${
                         selectedEmail.id === email.id
-                          ? 'bg-purple-50 border-l-2 border-purple-600'
+                          ? 'bg-blue-50 border-l-2 border-blue-600'
                           : 'hover:bg-gray-100 border-l-2 border-transparent'
                       }`}
                     >
-                      <span className={`text-sm ${selectedEmail.id === email.id ? 'text-purple-700 font-medium' : 'text-gray-700'}`}>
+                      <span className={`text-sm ${selectedEmail.id === email.id ? 'text-blue-700 font-medium' : 'text-gray-700'}`}>
                         {email.name}
                       </span>
                       <div className="flex items-center gap-2">
@@ -364,7 +364,7 @@ export default function FlowEditorPage() {
                   type="checkbox"
                   checked={onlyNewContacts}
                   onChange={(e) => setOnlyNewContacts(e.target.checked)}
-                  className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                  className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                 />
                 <span className="text-sm text-gray-700">Only send to new contacts</span>
               </label>
@@ -384,7 +384,7 @@ export default function FlowEditorPage() {
               Active
             </span>
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors">
+          <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
               <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
@@ -420,7 +420,7 @@ export default function FlowEditorPage() {
             <div className="w-full max-w-[500px] border border-gray-200 rounded-lg overflow-hidden shadow-sm">
               {/* Logo Area */}
               <div className="bg-white px-8 py-6 text-center border-b border-gray-100">
-                <span className="text-xl font-bold text-purple-700">Fluxmail</span>
+                <span className="text-xl font-bold text-blue-700">Fluxmail</span>
               </div>
 
               {/* Hero Section */}
@@ -439,9 +439,9 @@ export default function FlowEditorPage() {
                 <p className="text-gray-700 text-sm font-medium mb-4">{selectedEmail.cta}</p>
                 {selectedEmail.ctaCode && (
                   <div className="mb-6">
-                    <div className="inline-block border-2 border-dashed border-purple-300 rounded-lg px-6 py-3 bg-purple-50">
+                    <div className="inline-block border-2 border-dashed border-blue-300 rounded-lg px-6 py-3 bg-blue-50">
                       <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Use Code</p>
-                      <p className="text-lg font-bold text-purple-700 tracking-widest">{selectedEmail.ctaCode}</p>
+                      <p className="text-lg font-bold text-blue-700 tracking-widest">{selectedEmail.ctaCode}</p>
                     </div>
                   </div>
                 )}

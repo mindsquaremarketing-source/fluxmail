@@ -80,8 +80,8 @@ export default function ReferralPage() {
 
             {/* Step 4 */}
             <div className="text-center">
-              <div className="inline-flex items-center justify-center w-14 h-14 bg-purple-100 rounded-full mb-4">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <div className="inline-flex items-center justify-center w-14 h-14 bg-blue-100 rounded-full mb-4">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1E40AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
                 </svg>
               </div>

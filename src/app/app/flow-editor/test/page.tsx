@@ -68,7 +68,7 @@ export default function FlowTestPage() {
             value={testEmail}
             onChange={(e) => setTestEmail(e.target.value)}
             placeholder="your@email.com"
-            className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
           <p className="text-xs text-gray-400 mt-2">All test emails will be sent to this address.</p>
         </div>
