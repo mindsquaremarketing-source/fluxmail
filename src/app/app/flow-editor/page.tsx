@@ -279,6 +279,11 @@ export default function FlowEditorPage() {
   const [showEditMenu, setShowEditMenu] = useState(false)
   const [showSubjectEditor, setShowSubjectEditor] = useState(false)
   const [showTemplateEditor, setShowTemplateEditor] = useState(false)
+  const [showTestEmailModal, setShowTestEmailModal] = useState(false)
+  const [testEmailAddress, setTestEmailAddress] = useState('')
+  const [testEmailSending, setTestEmailSending] = useState(false)
+  const [testEmailSuccess, setTestEmailSuccess] = useState(false)
+  const [testEmailError, setTestEmailError] = useState('')
 
   const toggleFlow = (flowName: string) => {
     setExpandedFlow(expandedFlow === flowName ? '' : flowName)
@@ -290,28 +295,68 @@ export default function FlowEditorPage() {
 
   const currentTrigger = triggerInfo[expandedFlow] || triggerInfo['Welcome Flow']
 
-  const handleSendTestEmail = async () => {
-    const email = prompt('Enter your email address to receive the test:')
-    if (!email) return
+  const handleSendTestEmail = () => {
+    setShowEditMenu(false)
+    setTestEmailSuccess(false)
+    setTestEmailError('')
+    setTestEmailAddress('')
+    setShowTestEmailModal(true)
+  }
+
+  const handleSubmitTestEmail = async () => {
+    if (!testEmailAddress) {
+      setTestEmailError('Please enter an email address')
+      return
+    }
+    if (!testEmailAddress.includes('@')) {
+      setTestEmailError('Please enter a valid email address')
+      return
+    }
+
+    setTestEmailSending(true)
+    setTestEmailError('')
 
     try {
       const res = await fetch('/api/flow-emails/test', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          to: email,
-          subject: selectedEmail.subject,
-          html: `<div style="max-width:600px;margin:0 auto;font-family:Arial,sans-serif"><div style="text-align:center;padding:24px;border-bottom:1px solid #eee"><strong style="font-size:20px;color:#1E40AF">Fluxmail</strong></div><div style="padding:48px 32px;text-align:center;background:${selectedEmail.heroColor}"><h1 style="color:white;margin:0 0 12px">${selectedEmail.heading}</h1><p style="color:rgba(255,255,255,0.9);font-size:14px">${selectedEmail.body}</p></div><div style="padding:32px;text-align:center"><p style="font-size:14px;color:#374151">${selectedEmail.cta}</p>${selectedEmail.ctaCode ? `<div style="display:inline-block;border:2px dashed #93c5fd;border-radius:8px;padding:12px 24px;margin:16px 0;background:#eff6ff"><p style="font-size:10px;color:#6b7280;text-transform:uppercase;margin:0 0 4px">Use Code</p><p style="font-size:18px;font-weight:bold;color:#1E40AF;letter-spacing:2px;margin:0">${selectedEmail.ctaCode}</p></div>` : ''}<br><a href="#" style="display:inline-block;padding:12px 32px;background:${selectedEmail.heroColor};color:white;border-radius:8px;text-decoration:none;font-size:14px;font-weight:500">${selectedEmail.ctaCode ? 'Shop Now' : selectedEmail.cta}</a></div><div style="padding:16px;text-align:center;background:#f9fafb;border-top:1px solid #f3f4f6"><p style="font-size:11px;color:#9ca3af;margin:0">Sent via Fluxmail</p></div></div>`,
+          to: testEmailAddress,
+          subject: 'Test: Welcome Email from Fluxmail',
+          html: `
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#fff;">
+              <div style="background:#1E40AF;padding:40px 20px;text-align:center;">
+                <h1 style="color:#fff;margin:0;font-size:28px;">Welcome to Fluxmail!</h1>
+                <p style="color:#93C5FD;margin:10px 0 0;">Here is your 10% Off welcome gift</p>
+              </div>
+              <div style="padding:40px 20px;text-align:center;">
+                <p style="color:#374151;font-size:16px;">Use code below at checkout:</p>
+                <div style="border:2px dashed #1E40AF;display:inline-block;padding:12px 32px;margin:16px 0;border-radius:8px;">
+                  <span style="font-size:22px;font-weight:bold;letter-spacing:3px;color:#1E40AF;">FW-WELCOME10</span>
+                </div>
+                <div style="margin-top:24px;">
+                  <a href="#" style="background:#1E40AF;color:#fff;padding:14px 40px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;display:inline-block;">SHOP NOW</a>
+                </div>
+              </div>
+              <div style="background:#F3F4F6;padding:20px;text-align:center;">
+                <p style="color:#9CA3AF;font-size:12px;margin:0;">This is a test email from Fluxmail</p>
+              </div>
+            </div>
+          `,
         }),
       })
+
       if (res.ok) {
-        alert(`Test email sent to ${email}!`)
+        setTestEmailSuccess(true)
+        setTestEmailSending(false)
       } else {
         const data = await res.json()
-        alert(`Failed: ${data.error}`)
+        setTestEmailError(data.error || 'Failed to send test email')
+        setTestEmailSending(false)
       }
-    } catch (error) {
-      alert('Failed to send test email')
+    } catch (err: any) {
+      setTestEmailError(err.message)
+      setTestEmailSending(false)
     }
   }
 
@@ -471,7 +516,7 @@ export default function FlowEditorPage() {
                   </button>
                   <div className="border-t border-gray-100 my-1" />
                   <button
-                    onClick={() => { setShowEditMenu(false); handleSendTestEmail() }}
+                    onClick={handleSendTestEmail}
                     className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -631,6 +676,160 @@ export default function FlowEditorPage() {
             <div className="flex justify-end gap-3 mt-6">
               <button onClick={() => setShowTemplateEditor(false)} className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
               <button onClick={() => setShowTemplateEditor(false)} className="px-4 py-2 text-sm bg-blue-700 text-white rounded-lg hover:bg-blue-800">Save Changes</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Send Test Email Modal */}
+      {showTestEmailModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black bg-opacity-40 backdrop-blur-sm"
+            onClick={() => !testEmailSending && setShowTestEmailModal(false)}
+          />
+
+          {/* Modal */}
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden transform transition-all">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-blue-700 to-blue-500 px-6 py-5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 className="text-white font-semibold text-lg">Send Test Email</h2>
+                    <p className="text-blue-200 text-xs mt-0.5">Preview how your email looks in inbox</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowTestEmailModal(false)}
+                  disabled={testEmailSending}
+                  className="w-8 h-8 flex items-center justify-center text-white text-opacity-70 hover:text-opacity-100 hover:bg-white hover:bg-opacity-20 rounded-lg transition-all"
+                >
+                  &#10005;
+                </button>
+              </div>
+            </div>
+
+            {/* Body */}
+            <div className="px-6 py-6">
+              {!testEmailSuccess ? (
+                <>
+                  <div className="mb-5">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Email address</label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                      <input
+                        type="email"
+                        value={testEmailAddress}
+                        onChange={(e) => {
+                          setTestEmailAddress(e.target.value)
+                          setTestEmailError('')
+                        }}
+                        onKeyDown={(e) => e.key === 'Enter' && handleSubmitTestEmail()}
+                        placeholder="you@example.com"
+                        autoFocus
+                        disabled={testEmailSending}
+                        className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl text-sm transition-all outline-none ${
+                          testEmailError
+                            ? 'border-red-300 bg-red-50 focus:border-red-400'
+                            : 'border-gray-200 focus:border-blue-500 bg-gray-50 focus:bg-white'
+                        } disabled:opacity-50`}
+                      />
+                    </div>
+
+                    {testEmailError && (
+                      <div className="flex items-center gap-2 mt-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-red-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <p className="text-red-500 text-xs">{testEmailError}</p>
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-2 mt-3 bg-blue-50 rounded-lg px-3 py-2.5">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-blue-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <p className="text-blue-600 text-xs">The email will be sent from your sender domain</p>
+                    </div>
+                  </div>
+
+                  {/* Footer buttons */}
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setShowTestEmailModal(false)}
+                      disabled={testEmailSending}
+                      className="flex-1 px-4 py-3 text-sm font-medium border-2 border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all disabled:opacity-50"
+                    >
+                      Discard
+                    </button>
+                    <button
+                      onClick={handleSubmitTestEmail}
+                      disabled={testEmailSending || !testEmailAddress}
+                      className="flex-1 px-4 py-3 text-sm font-semibold bg-blue-700 text-white rounded-xl hover:bg-blue-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-blue-200"
+                    >
+                      {testEmailSending ? (
+                        <>
+                          <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                          </svg>
+                          Sending...
+                        </>
+                      ) : (
+                        <>
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                          </svg>
+                          Send Test Email
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                /* Success State */
+                <div className="text-center py-4">
+                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Test Email Sent!</h3>
+                  <p className="text-gray-500 text-sm mb-1">We sent a test email to:</p>
+                  <p className="text-blue-700 font-semibold text-sm mb-5">{testEmailAddress}</p>
+                  <p className="text-gray-400 text-xs mb-6">
+                    Check your inbox — it may take a minute to arrive. Don&apos;t forget to check your spam folder.
+                  </p>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => {
+                        setTestEmailSuccess(false)
+                        setTestEmailAddress('')
+                      }}
+                      className="flex-1 px-4 py-3 text-sm font-medium border-2 border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50 transition-all"
+                    >
+                      Send Another
+                    </button>
+                    <button
+                      onClick={() => setShowTestEmailModal(false)}
+                      className="flex-1 px-4 py-3 text-sm font-semibold bg-blue-700 text-white rounded-xl hover:bg-blue-800 transition-all shadow-lg shadow-blue-200"
+                    >
+                      Done
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
