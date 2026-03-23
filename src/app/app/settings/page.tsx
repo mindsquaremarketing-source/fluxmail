@@ -5,6 +5,7 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saveMsg, setSaveMsg] = useState('')
+  const [syncing, setSyncing] = useState(false)
   const logoInputRef = useRef<HTMLInputElement>(null)
 
   const [firstName, setFirstName] = useState('')
@@ -67,6 +68,10 @@ export default function SettingsPage() {
           setRootDomain(s.rootDomain || s.shopDomain || '')
           setSenderDomain(s.senderDomain || '')
           setSenderEmail(s.senderEmail || '')
+          // Auto sync from Shopify if no company name set
+          if (!s.companyName && !s.logoUrl) {
+            setTimeout(() => syncFromShopify(), 1000)
+          }
         }
         setLoading(false)
       })
@@ -113,6 +118,38 @@ export default function SettingsPage() {
     reader.readAsDataURL(file)
   }
 
+  const syncFromShopify = async () => {
+    setSyncing(true)
+    try {
+      const res = await fetch('/api/sync/branding', { method: 'POST' })
+      if (res.ok) {
+        const settingsRes = await fetch('/api/settings')
+        const settingsData = await settingsRes.json()
+        const s = settingsData.store
+        if (s) {
+          setCompanyName(s.companyName || '')
+          setWebsite(s.website || '')
+          setLogoUrl(s.logoUrl || '')
+          setPrimaryColor(s.primaryColor || '#1E40AF')
+          setEmail(s.email || '')
+          setPhone(s.phone || '')
+          setCity(s.city || '')
+          setCountry(s.country || '')
+          setZip(s.zip || '')
+          setAddress(s.address || '')
+        }
+        setSaveMsg('Synced from Shopify!')
+        setTimeout(() => setSaveMsg(''), 4000)
+      } else {
+        setSaveMsg('Sync failed')
+      }
+    } catch {
+      setSaveMsg('Sync failed')
+    } finally {
+      setSyncing(false)
+    }
+  }
+
   if (loading) return (
     <div className="flex items-center justify-center h-64">
       <div className="text-center">
@@ -130,20 +167,67 @@ export default function SettingsPage() {
   const sectionClass = "grid grid-cols-3 gap-8 py-8 border-b border-gray-100"
   const leftClass = "col-span-1"
   const rightClass = "col-span-2 bg-white rounded-2xl border border-gray-200 shadow-sm p-6"
-  const saveBtn = "px-4 py-2 bg-blue-700 text-white text-sm font-semibold rounded-lg hover:bg-blue-800 disabled:opacity-50 transition-colors"
+  const saveBtn = "flex items-center gap-2 px-5 py-2.5 bg-blue-700 text-white text-sm font-semibold rounded-xl hover:bg-blue-800 disabled:opacity-50 transition-all shadow-md shadow-blue-200"
+
+  const SaveButton = ({ onClick }: { onClick: () => void }) => (
+    <div className="flex justify-end mt-4 pt-4 border-t border-gray-100">
+      <button disabled={saving} onClick={onClick} className={saveBtn}>
+        {saving ? (
+          <>
+            <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+            </svg>
+            Saving...
+          </>
+        ) : (
+          <>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            Save Changes
+          </>
+        )}
+      </button>
+    </div>
+  )
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Brand &amp; Settings</h1>
-        {saveMsg && (
-          <span className={`text-sm font-medium px-3 py-1.5 rounded-lg ${
-            saveMsg.includes('Failed') ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
-          }`}>
-            {saveMsg}
-          </span>
-        )}
+        <div className="flex items-center gap-3">
+          {saveMsg && (
+            <span className={`text-sm font-medium px-3 py-1.5 rounded-lg ${
+              saveMsg.includes('failed') || saveMsg.includes('Failed') ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+            }`}>
+              {saveMsg}
+            </span>
+          )}
+          <button
+            onClick={syncFromShopify}
+            disabled={syncing}
+            className="flex items-center gap-2 bg-green-600 text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-green-700 disabled:opacity-50 transition-all shadow-lg shadow-green-200"
+          >
+            {syncing ? (
+              <>
+                <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                </svg>
+                Syncing...
+              </>
+            ) : (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Sync from Shopify
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* PROFILE */}
@@ -171,11 +255,7 @@ export default function SettingsPage() {
               <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="+1 (555) 000-0000" className={inputClass} />
             </div>
           </div>
-          <div className="flex justify-end">
-            <button disabled={saving} onClick={() => save({ firstName, lastName, email, phone })} className={saveBtn}>
-              {saving ? 'Saving...' : 'Save'}
-            </button>
-          </div>
+          <SaveButton onClick={() => save({ firstName, lastName, email, phone })} />
         </div>
       </div>
 
@@ -274,11 +354,7 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          <div className="flex justify-end">
-            <button disabled={saving} onClick={() => save({ language, fontFamily, buttonShape })} className={saveBtn}>
-              {saving ? 'Saving...' : 'Save'}
-            </button>
-          </div>
+          <SaveButton onClick={() => save({ language, fontFamily, buttonShape })} />
         </div>
       </div>
 
@@ -312,11 +388,7 @@ export default function SettingsPage() {
           </div>
           <div className="flex items-center justify-between">
             <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">Regenerate Flows</button>
-            <button disabled={saving}
-              onClick={() => save({ primaryColor, primaryText, secondaryColor, secondaryText, bgColor, bgText })}
-              className={saveBtn}>
-              {saving ? 'Saving...' : 'Save'}
-            </button>
+            <SaveButton onClick={() => save({ primaryColor, primaryText, secondaryColor, secondaryText, bgColor, bgText })} />
           </div>
         </div>
       </div>
@@ -359,13 +431,7 @@ export default function SettingsPage() {
             </div>
           </div>
           <p className="text-xs text-gray-400 mb-4">* Including your complete business address in marketing emails is required to comply with CAN-SPAM, GDPR, CASL.</p>
-          <div className="flex justify-end">
-            <button disabled={saving}
-              onClick={() => save({ companyName, website, country, state: stateVal, city, zip, address })}
-              className={saveBtn}>
-              {saving ? 'Saving...' : 'Save'}
-            </button>
-          </div>
+          <SaveButton onClick={() => save({ companyName, website, country, state: stateVal, city, zip, address })} />
         </div>
       </div>
 
@@ -399,11 +465,7 @@ export default function SettingsPage() {
             </div>
           </div>
           <p className="text-xs text-gray-400 mb-4">To make changes to your Root domain, Sender Domain, or sender email address, please contact our customer support.</p>
-          <div className="flex justify-end">
-            <button disabled={saving} onClick={() => save({ senderName, replyToEmail })} className={saveBtn}>
-              {saving ? 'Saving...' : 'Save'}
-            </button>
-          </div>
+          <SaveButton onClick={() => save({ senderName, replyToEmail })} />
         </div>
       </div>
 
