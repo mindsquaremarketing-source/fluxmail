@@ -9,17 +9,13 @@ export async function GET(req: NextRequest) {
 
     let store
     if (shop) {
-      store = await prisma.store.findUnique({
-        where: { shopDomain: shop },
-      })
+      store = await prisma.store.findUnique({ where: { shopDomain: shop } })
     } else {
-      store = await prisma.store.findFirst({
-        orderBy: { createdAt: 'desc' },
-      })
+      store = await prisma.store.findFirst({ orderBy: { createdAt: 'desc' } })
     }
 
     if (!store) {
-      return NextResponse.json({ error: 'Store not found' }, { status: 404 })
+      return NextResponse.json({ store: null })
     }
 
     const contactCount = await prisma.contact.count({
@@ -33,9 +29,28 @@ export async function GET(req: NextRequest) {
         id: store.id,
         shopDomain: store.shopDomain,
         storeName: shopName.charAt(0).toUpperCase() + shopName.slice(1),
-        primaryColor: '#1E40AF',
-        logoUrl: '',
-        website: `https://${store.shopDomain}`,
+        firstName: store.firstName || '',
+        lastName: store.lastName || '',
+        email: store.email || '',
+        phone: store.phone || '',
+        logoUrl: store.logoUrl || '',
+        primaryColor: store.primaryColor || '#1E40AF',
+        secondaryColor: store.secondaryColor || '#FFFFFF',
+        bgColor: store.bgColor || '#FFFFFF',
+        primaryText: store.primaryText || '#FFFFFF',
+        secondaryText: store.secondaryText || '#000000',
+        bgText: store.bgText || '#1F2937',
+        fontFamily: store.fontFamily || 'Arial',
+        buttonShape: store.buttonShape || 'rounded',
+        companyName: store.companyName || '',
+        website: store.website || `https://${store.shopDomain}`,
+        country: store.country || '',
+        state: store.state || '',
+        city: store.city || '',
+        zip: store.zip || '',
+        address: store.address || '',
+        senderName: store.senderName || '',
+        replyToEmail: store.replyToEmail || '',
         createdAt: store.createdAt,
       },
       contactCount,
@@ -49,29 +64,39 @@ export async function GET(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   try {
     const body = await req.json()
-    const { shop, ...settings } = body
 
-    if (!shop) {
-      return NextResponse.json({ error: 'Missing shop parameter' }, { status: 400 })
-    }
-
-    const store = await prisma.store.findUnique({
-      where: { shopDomain: shop },
+    const store = await prisma.store.findFirst({
+      orderBy: { createdAt: 'desc' }
     })
 
     if (!store) {
       return NextResponse.json({ error: 'Store not found' }, { status: 404 })
     }
 
-    // Settings would be saved to a StoreSettings model in production
-    // For now, return success
-    return NextResponse.json({
-      success: true,
-      message: 'Settings updated',
-      settings,
+    const data: any = {}
+    const fields = [
+      'firstName', 'lastName', 'email', 'phone', 'logoUrl',
+      'primaryColor', 'secondaryColor', 'bgColor',
+      'primaryText', 'secondaryText', 'bgText',
+      'fontFamily', 'buttonShape',
+      'companyName', 'website', 'country', 'state', 'city', 'zip', 'address',
+      'senderName', 'replyToEmail',
+    ]
+
+    for (const field of fields) {
+      if (body[field] !== undefined) {
+        data[field] = body[field]
+      }
+    }
+
+    const updated = await prisma.store.update({
+      where: { id: store.id },
+      data,
     })
+
+    return NextResponse.json({ success: true, store: updated })
   } catch (error: any) {
-    console.error('Settings PUT error:', error)
+    console.error('Settings update error:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

@@ -1,20 +1,17 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 export default function SettingsPage() {
-  // Profile
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
-
-  // Branding
+  const [logoUrl, setLogoUrl] = useState('')
+  const [logoUploading, setLogoUploading] = useState(false)
   const [language, setLanguage] = useState('english')
   const [fontFamily, setFontFamily] = useState('Arial')
   const [buttonShape, setButtonShape] = useState<'square' | 'rounded' | 'pill'>('rounded')
-
-  // Colors
   const [colors, setColors] = useState({
     primary: '#1E40AF',
     primaryText: '#FFFFFF',
@@ -23,8 +20,6 @@ export default function SettingsPage() {
     background: '#FFFFFF',
     backgroundText: '#1F2937',
   })
-
-  // Company
   const [company, setCompany] = useState('')
   const [website, setWebsite] = useState('')
   const [country, setCountry] = useState('')
@@ -32,13 +27,96 @@ export default function SettingsPage() {
   const [city, setCity] = useState('')
   const [zip, setZip] = useState('')
   const [address, setAddress] = useState('')
-
-  // Sender
   const [senderName, setSenderName] = useState('Fluxmail')
   const [replyTo, setReplyTo] = useState('')
-
-  // Search
   const [productSearch, setProductSearch] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [saveMessage, setSaveMessage] = useState('')
+  const [contactCount, setContactCount] = useState(0)
+
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const res = await fetch('/api/settings')
+        const data = await res.json()
+        const store = data.store
+        if (store) {
+          setFirstName(store.firstName || '')
+          setLastName(store.lastName || '')
+          setEmail(store.email || '')
+          setPhone(store.phone || '')
+          setLogoUrl(store.logoUrl || '')
+          setColors({
+            primary: store.primaryColor || '#1E40AF',
+            primaryText: store.primaryText || '#FFFFFF',
+            secondary: store.secondaryColor || '#FFFFFF',
+            secondaryText: store.secondaryText || '#000000',
+            background: store.bgColor || '#FFFFFF',
+            backgroundText: store.bgText || '#1F2937',
+          })
+          setFontFamily(store.fontFamily || 'Arial')
+          setButtonShape(store.buttonShape || 'rounded')
+          setCompany(store.companyName || '')
+          setWebsite(store.website || '')
+          setCountry(store.country || '')
+          setState(store.state || '')
+          setCity(store.city || '')
+          setZip(store.zip || '')
+          setAddress(store.address || '')
+          setSenderName(store.senderName || 'Fluxmail')
+          setReplyTo(store.replyToEmail || '')
+        }
+        if (data.contactCount !== undefined) setContactCount(data.contactCount)
+      } catch (e) {
+        console.error('Failed to load settings:', e)
+      }
+    }
+    loadSettings()
+  }, [])
+
+  const handleSave = async (data: any) => {
+    setSaving(true)
+    setSaveMessage('')
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      if (res.ok) {
+        setSaveMessage('Saved successfully!')
+        setTimeout(() => setSaveMessage(''), 3000)
+      } else {
+        setSaveMessage('Save failed')
+      }
+    } catch (e) {
+      setSaveMessage('Save failed')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > 2 * 1024 * 1024) {
+      alert('File too large. Max 2MB.')
+      return
+    }
+    setLogoUploading(true)
+    const reader = new FileReader()
+    reader.onloadend = async () => {
+      const base64 = reader.result as string
+      setLogoUrl(base64)
+      await fetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ logoUrl: base64 })
+      })
+      setLogoUploading(false)
+    }
+    reader.readAsDataURL(file)
+  }
 
   const updateColor = (key: string, value: string) => {
     setColors((prev) => ({ ...prev, [key]: value }))
@@ -46,7 +124,14 @@ export default function SettingsPage() {
 
   return (
     <div className="p-8 bg-gray-50 min-h-screen max-w-5xl">
-      <h1 className="text-2xl font-bold text-gray-900 mb-8">Brand &amp; Settings</h1>
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-2xl font-bold text-gray-900">Brand &amp; Settings</h1>
+        {saveMessage && (
+          <span className={`text-sm font-medium ${saveMessage.includes('failed') ? 'text-red-600' : 'text-green-600'}`}>
+            {saveMessage}
+          </span>
+        )}
+      </div>
 
       {/* Profile Information */}
       <div className="flex gap-8 mb-10">
@@ -76,7 +161,13 @@ export default function SettingsPage() {
             </div>
           </div>
           <div className="flex justify-end">
-            <button className="px-5 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors">Save</button>
+            <button
+              onClick={() => handleSave({ firstName, lastName, email, phone })}
+              disabled={saving}
+              className="px-5 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50"
+            >
+              {saving ? 'Saving...' : 'Save'}
+            </button>
           </div>
         </div>
       </div>
@@ -90,18 +181,56 @@ export default function SettingsPage() {
         <div className="w-2/3 bg-white rounded-xl border border-gray-200 p-6">
           {/* Logo Upload */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Logo</label>
-            <div className="flex items-center gap-4">
-              <div className="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center border border-gray-200">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" />
-                </svg>
-              </div>
-              <div className="flex gap-2">
-                <button className="px-4 py-2 text-sm font-medium text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors">Edit</button>
-                <button className="px-4 py-2 text-sm font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">Remove</button>
-              </div>
+            <p className="text-sm font-medium text-gray-700 mb-1">Logo</p>
+            <p className="text-xs text-gray-500 mb-3">Edit the logo block across all your emails at once</p>
+
+            <div className="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center bg-gray-50 mb-3">
+              {logoUrl ? (
+                <img src={logoUrl} alt="Store logo" className="max-h-24 max-w-48 mx-auto object-contain" />
+              ) : (
+                <div className="flex flex-col items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <p className="text-sm text-gray-400">No logo uploaded</p>
+                </div>
+              )}
             </div>
+
+            <div className="flex gap-3">
+              <label className="flex-1 cursor-pointer">
+                <input type="file" accept="image/png,image/jpg,image/jpeg,image/webp" onChange={handleLogoUpload} className="hidden" disabled={logoUploading} />
+                <div className={`flex items-center justify-center gap-2 border border-gray-300 rounded-lg px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors ${logoUploading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
+                  {logoUploading ? (
+                    <>
+                      <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/></svg>
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                      Upload Logo
+                    </>
+                  )}
+                </div>
+              </label>
+              {logoUrl && (
+                <button
+                  onClick={async () => {
+                    setLogoUrl('')
+                    await fetch('/api/settings', {
+                      method: 'PUT',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ logoUrl: '' })
+                    })
+                  }}
+                  className="px-4 py-2.5 text-sm font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50"
+                >
+                  Remove
+                </button>
+              )}
+            </div>
+            <p className="text-xs text-gray-400 mt-2">Accepts PNG, JPG, JPEG, WebP. Max 2MB.</p>
           </div>
 
           {/* Language */}
@@ -133,20 +262,20 @@ export default function SettingsPage() {
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-2">Button Shape</label>
             <div className="flex gap-3">
-              <button onClick={() => setButtonShape('square')} className={`w-24 h-10 border-2 text-xs font-medium transition-all rounded-none ${buttonShape === 'square' ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>
-                Square
-              </button>
-              <button onClick={() => setButtonShape('rounded')} className={`w-24 h-10 border-2 text-xs font-medium transition-all rounded-lg ${buttonShape === 'rounded' ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>
-                Rounded
-              </button>
-              <button onClick={() => setButtonShape('pill')} className={`w-24 h-10 border-2 text-xs font-medium transition-all rounded-full ${buttonShape === 'pill' ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>
-                Pill
-              </button>
+              <button onClick={() => setButtonShape('square')} className={`w-24 h-10 border-2 text-xs font-medium transition-all rounded-none ${buttonShape === 'square' ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>Square</button>
+              <button onClick={() => setButtonShape('rounded')} className={`w-24 h-10 border-2 text-xs font-medium transition-all rounded-lg ${buttonShape === 'rounded' ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>Rounded</button>
+              <button onClick={() => setButtonShape('pill')} className={`w-24 h-10 border-2 text-xs font-medium transition-all rounded-full ${buttonShape === 'pill' ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>Pill</button>
             </div>
           </div>
 
           <div className="flex justify-end">
-            <button className="px-5 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors">Save</button>
+            <button
+              onClick={() => handleSave({ fontFamily, buttonShape })}
+              disabled={saving}
+              className="px-5 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50"
+            >
+              {saving ? 'Saving...' : 'Save'}
+            </button>
           </div>
         </div>
       </div>
@@ -171,25 +300,28 @@ export default function SettingsPage() {
               <div key={color.key}>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">{color.label}</label>
                 <div className="flex items-center gap-2">
-                  <input
-                    type="color"
-                    value={colors[color.key]}
-                    onChange={(e) => updateColor(color.key, e.target.value)}
-                    className="w-10 h-10 rounded-lg border border-gray-200 cursor-pointer p-0.5"
-                  />
-                  <input
-                    type="text"
-                    value={colors[color.key]}
-                    onChange={(e) => updateColor(color.key, e.target.value)}
-                    className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
+                  <input type="color" value={colors[color.key]} onChange={(e) => updateColor(color.key, e.target.value)} className="w-10 h-10 rounded-lg border border-gray-200 cursor-pointer p-0.5" />
+                  <input type="text" value={colors[color.key]} onChange={(e) => updateColor(color.key, e.target.value)} className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                 </div>
               </div>
             ))}
           </div>
           <div className="flex items-center justify-between">
             <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">Regenerate Flows</button>
-            <button className="px-5 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors">Save</button>
+            <button
+              onClick={() => handleSave({
+                primaryColor: colors.primary,
+                primaryText: colors.primaryText,
+                secondaryColor: colors.secondary,
+                secondaryText: colors.secondaryText,
+                bgColor: colors.background,
+                bgText: colors.backgroundText,
+              })}
+              disabled={saving}
+              className="px-5 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50"
+            >
+              {saving ? 'Saving...' : 'Save'}
+            </button>
           </div>
         </div>
       </div>
@@ -203,23 +335,13 @@ export default function SettingsPage() {
         <div className="w-2/3 bg-white rounded-xl border border-gray-200 p-6">
           <div className="flex items-center gap-3 mb-6">
             <div className="relative flex-1">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute left-3 top-1/2 -translate-y-1/2">
-                <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
-              <input
-                type="text"
-                value={productSearch}
-                onChange={(e) => setProductSearch(e.target.value)}
-                placeholder="Search products..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute left-3 top-1/2 -translate-y-1/2"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+              <input type="text" value={productSearch} onChange={(e) => setProductSearch(e.target.value)} placeholder="Search products..." className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
             </div>
             <button className="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">Browse</button>
           </div>
           <div className="flex flex-col items-center py-8 text-center">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mb-3">
-              <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" /><line x1="7" y1="7" x2="7.01" y2="7" />
-            </svg>
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mb-3"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" /><line x1="7" y1="7" x2="7.01" y2="7" /></svg>
             <p className="text-sm text-gray-400">There are no excluded products</p>
           </div>
         </div>
@@ -268,7 +390,13 @@ export default function SettingsPage() {
           </div>
           <p className="text-xs text-gray-400 mb-4">Your physical address is required by the CAN-SPAM Act and will appear in the footer of all marketing emails.</p>
           <div className="flex justify-end">
-            <button className="px-5 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors">Save</button>
+            <button
+              onClick={() => handleSave({ companyName: company, website, country, state, city, zip, address })}
+              disabled={saving}
+              className="px-5 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50"
+            >
+              {saving ? 'Saving...' : 'Save'}
+            </button>
           </div>
         </div>
       </div>
@@ -302,7 +430,13 @@ export default function SettingsPage() {
           </div>
           <p className="text-xs text-gray-400 mb-4">To change your sending domain, please contact support.</p>
           <div className="flex justify-end">
-            <button className="px-5 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors">Save</button>
+            <button
+              onClick={() => handleSave({ senderName, replyToEmail: replyTo })}
+              disabled={saving}
+              className="px-5 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50"
+            >
+              {saving ? 'Saving...' : 'Save'}
+            </button>
           </div>
         </div>
       </div>
@@ -321,14 +455,14 @@ export default function SettingsPage() {
             </div>
             <div className="flex items-center justify-between py-3 border-b border-gray-100">
               <span className="text-sm text-gray-600">Active Contacts</span>
-              <span className="text-sm font-semibold text-gray-900">Loading...</span>
+              <span className="text-sm font-semibold text-gray-900">{contactCount.toLocaleString()}</span>
             </div>
             <div className="flex items-center justify-between py-3 border-b border-gray-100">
               <span className="text-sm text-gray-600">Emails sent this cycle</span>
               <span className="text-sm font-semibold text-gray-900">0</span>
             </div>
             <div className="pt-2">
-              <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">View pricing scale →</button>
+              <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">View pricing scale &rarr;</button>
             </div>
           </div>
         </div>

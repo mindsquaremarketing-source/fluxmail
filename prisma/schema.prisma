@@ -8,12 +8,34 @@ datasource db {
 }
 
 model Store {
-  id          String    @id @default(cuid())
-  shopDomain  String    @unique
-  accessToken String
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  contacts    Contact[]
+  id             String    @id @default(cuid())
+  shopDomain     String    @unique
+  accessToken    String
+  firstName      String?
+  lastName       String?
+  email          String?
+  phone          String?
+  logoUrl        String?   @db.Text
+  primaryColor   String?   @default("#1E40AF")
+  secondaryColor String?   @default("#FFFFFF")
+  bgColor        String?   @default("#FFFFFF")
+  primaryText    String?   @default("#FFFFFF")
+  secondaryText  String?   @default("#000000")
+  bgText         String?   @default("#1F2937")
+  fontFamily     String?   @default("Arial")
+  buttonShape    String?   @default("rounded")
+  companyName    String?
+  website        String?
+  country        String?
+  state          String?
+  city           String?
+  zip            String?
+  address        String?
+  senderName     String?
+  replyToEmail   String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  contacts       Contact[]
 }
 
 model Contact {
