@@ -73,6 +73,18 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: 'Store not found' }, { status: 404 })
     }
 
+    // Upload base64 logo to Supabase Storage for email compatibility
+    if (body.logoUrl && body.logoUrl.startsWith('data:image')) {
+      try {
+        const { uploadLogoToStorage } = await import('@/lib/storage')
+        const publicUrl = await uploadLogoToStorage(body.logoUrl, store.id)
+        console.log('Logo uploaded to Supabase:', publicUrl)
+        body.logoUrl = publicUrl
+      } catch (uploadError) {
+        console.error('Logo upload to storage failed, keeping base64:', uploadError)
+      }
+    }
+
     const data: any = {}
     const fields = [
       'firstName', 'lastName', 'email', 'phone', 'logoUrl',
