@@ -277,8 +277,43 @@ export default function FlowEditor() {
   const [storeProducts, setStoreProducts] = useState<any[]>([])
   const [dynamicTemplates, setDynamicTemplates] = useState<Record<string, string>>({})
   const [loadingTemplate, setLoadingTemplate] = useState(false)
+  const [logoLoaded, setLogoLoaded] = useState(false)
 
-  // Load store data and pre-generate first template on mount
+  // Pre-generate all templates in background
+  const preGenerateAllTemplates = async (store: any, products: any[]) => {
+    const allKeys = [
+      'welcome-1', 'welcome-2', 'welcome-3',
+      'browse-1', 'browse-2',
+      'checkout-1', 'checkout-2', 'checkout-3',
+      'thankyou-1', 'thankyou-2',
+      'winback-1', 'winback-2', 'winback-3'
+    ]
+    for (const key of allKeys) {
+      const cacheKey = `template_${key}_${store.id}`
+      try {
+        const existing = localStorage.getItem(cacheKey)
+        if (existing) {
+          setDynamicTemplates(prev => ({ ...prev, [key]: existing }))
+          continue
+        }
+      } catch {}
+      try {
+        const res = await fetch('/api/templates/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ templateKey: key, storeData: store, products: products.slice(0, 2) })
+        })
+        const data = await res.json()
+        if (data.html) {
+          try { localStorage.setItem(cacheKey, data.html) } catch {}
+          setDynamicTemplates(prev => ({ ...prev, [key]: data.html }))
+        }
+        await new Promise(r => setTimeout(r, 150))
+      } catch {}
+    }
+  }
+
+  // Load store data, preload logo, and generate templates on mount
   useEffect(() => {
     const init = async () => {
       try {
@@ -292,7 +327,18 @@ export default function FlowEditor() {
         setStoreData(settingsData.store)
         setStoreProducts(productsData.products || [])
 
-        // Pre-generate first email template
+        // Preload logo image before generating templates
+        if (settingsData.store?.logoUrl) {
+          await new Promise<void>((resolve) => {
+            const img = new Image()
+            img.onload = () => resolve()
+            img.onerror = () => resolve()
+            img.src = settingsData.store.logoUrl
+          })
+        }
+        setLogoLoaded(true)
+
+        // Generate first template after logo is preloaded
         if (settingsData.store) {
           const res = await fetch('/api/templates/generate', {
             method: 'POST',
@@ -306,11 +352,16 @@ export default function FlowEditor() {
           const data = await res.json()
           if (data.html) {
             setDynamicTemplates(prev => ({ ...prev, 'welcome-1': data.html }))
+            try { localStorage.setItem(`template_welcome-1_${settingsData.store.id}`, data.html) } catch {}
             setSelectedHtml(data.html)
           }
+
+          // Pre-generate all other templates in background
+          preGenerateAllTemplates(settingsData.store, productsData.products || [])
         }
       } catch (e) {
         console.error('Failed to load store data:', e)
+        setLogoLoaded(true)
       }
     }
     init()
@@ -319,11 +370,24 @@ export default function FlowEditor() {
   const handleEmailClick = async (email: FlowEmail) => {
     setSelectedEmail(email)
 
-    // Use cached dynamic template if available
-    const cached = dynamicTemplates[email.templateKey]
-    if (cached) {
-      setSelectedHtml(cached)
+    // Check memory cache first
+    const memoryCached = dynamicTemplates[email.templateKey]
+    if (memoryCached) {
+      setSelectedHtml(memoryCached)
       return
+    }
+
+    // Check localStorage cache
+    if (storeData?.id) {
+      const cacheKey = `template_${email.templateKey}_${storeData.id}`
+      try {
+        const lsCached = localStorage.getItem(cacheKey)
+        if (lsCached) {
+          setSelectedHtml(lsCached)
+          setDynamicTemplates(prev => ({ ...prev, [email.templateKey]: lsCached }))
+          return
+        }
+      } catch {}
     }
 
     // Generate dynamic template via API
@@ -342,6 +406,7 @@ export default function FlowEditor() {
         const data = await res.json()
         if (data.html) {
           setDynamicTemplates(prev => ({ ...prev, [email.templateKey]: data.html }))
+          try { localStorage.setItem(`template_${email.templateKey}_${storeData.id}`, data.html) } catch {}
           setSelectedHtml(data.html)
           setLoadingTemplate(false)
           return
@@ -519,14 +584,14 @@ export default function FlowEditor() {
         </div>
 
         <div className="flex-1 overflow-auto bg-gray-100 p-6">
-          {loadingTemplate ? (
+          {!logoLoaded || loadingTemplate ? (
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
                 <svg className="animate-spin h-8 w-8 text-blue-600 mx-auto mb-3" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
                 </svg>
-                <p className="text-sm text-gray-500">Generating with your brand...</p>
+                <p className="text-sm text-gray-500">{!logoLoaded ? 'Loading your brand...' : 'Generating with your brand...'}</p>
               </div>
             </div>
           ) : (

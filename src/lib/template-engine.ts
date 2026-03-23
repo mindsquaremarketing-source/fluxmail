@@ -39,8 +39,8 @@ function getColors(primaryColor: string) {
 function getLogoHtml(logoUrl: string, storeName: string, primaryColor: string) {
   const textOnPrimary = getContrastColor(primaryColor)
   if (!logoUrl) return `<span style="color:${textOnPrimary};font-size:26px;font-weight:900;letter-spacing:-0.5px;">${storeName}</span>`
-  if (isDark(primaryColor)) return `<img src="${logoUrl}" alt="${storeName}" style="max-height:55px;max-width:180px;display:block;margin:0 auto;">`
-  return `<div style="display:inline-block;background:rgba(255,255,255,0.92);padding:8px 18px;border-radius:10px;"><img src="${logoUrl}" alt="${storeName}" style="max-height:50px;max-width:170px;display:block;"></div>`
+  if (isDark(primaryColor)) return `<img src="${logoUrl}" alt="${storeName}" loading="eager" style="max-height:55px;max-width:180px;display:block;margin:0 auto;">`
+  return `<div style="display:inline-block;background:rgba(255,255,255,0.92);padding:8px 18px;border-radius:10px;"><img src="${logoUrl}" alt="${storeName}" loading="eager" style="max-height:50px;max-width:170px;display:block;"></div>`
 }
 
 function header(logoUrl: string, storeName: string, primaryColor: string) {
