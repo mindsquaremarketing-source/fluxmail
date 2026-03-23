@@ -2,212 +2,6 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
-const emailTemplates: Record<string, string> = {
-  'welcome-1': `<html><body style="margin:0;padding:20px;background:#f4f4f4;font-family:Arial">
-<div style="max-width:600px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
-<div style="background:#1E40AF;padding:32px;text-align:center">
-<h1 style="color:#fff;margin:0;font-size:26px">Welcome! &#127881;</h1>
-<p style="color:#93C5FD;margin:8px 0 0">We are so glad you are here</p></div>
-<div style="padding:40px;text-align:center">
-<h2 style="color:#111827;font-size:26px;margin:0 0 16px">Here is 10% Off Your First Order</h2>
-<p style="color:#6B7280;line-height:1.7;margin:0 0 24px">Thank you for joining! Use code below to save on your first purchase.</p>
-<div style="background:#EFF6FF;border:2px dashed #1E40AF;border-radius:16px;padding:24px;margin-bottom:24px">
-<p style="color:#1E40AF;font-size:12px;font-weight:700;margin:0 0 8px;letter-spacing:2px">YOUR WELCOME GIFT</p>
-<div style="background:#1E40AF;color:#fff;display:inline-block;padding:12px 32px;border-radius:8px;font-size:22px;font-weight:900;letter-spacing:3px">FW-WELCOME10</div>
-<p style="color:#6B7280;font-size:13px;margin:12px 0 0">10% off your entire order</p></div>
-<a href="#" style="display:inline-block;background:#1E40AF;color:#fff;padding:16px 48px;border-radius:50px;text-decoration:none;font-weight:700;font-size:15px;box-shadow:0 8px 24px rgba(30,64,175,0.3)">Shop Now</a></div>
-<div style="background:#F9FAFB;padding:24px;text-align:center">
-<span style="margin:0 16px;font-size:24px">&#128666;</span>
-<span style="margin:0 16px;font-size:24px">&#8617;&#65039;</span>
-<span style="margin:0 16px;font-size:24px">&#11088;</span></div>
-<div style="background:#111827;padding:20px;text-align:center">
-<a href="#" style="color:#9CA3AF;font-size:12px">Unsubscribe</a></div></div></body></html>`,
-
-  'welcome-2': `<html><body style="margin:0;padding:20px;background:#f4f4f4;font-family:Arial">
-<div style="max-width:600px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
-<div style="background:linear-gradient(135deg,#1E40AF,#3B82F6);padding:32px;text-align:center">
-<h1 style="color:#fff;margin:0;font-size:24px">Your discount is still waiting! &#9200;</h1></div>
-<div style="padding:40px">
-<h2 style="color:#111827;font-size:22px;margin:0 0 16px">Did you find everything you were looking for?</h2>
-<p style="color:#6B7280;line-height:1.7;margin:0 0 24px">We noticed you have not used your welcome discount yet. Here is a reminder — it expires in 48 hours!</p>
-<div style="background:#FFF7ED;border-left:4px solid #F59E0B;border-radius:8px;padding:16px;margin-bottom:24px">
-<p style="color:#92400E;font-weight:700;margin:0 0 4px">&#9200; Expires in 48 hours!</p>
-<p style="color:#78350F;font-size:13px;margin:0">Use code <strong>FW-WELCOME10</strong> for 10% off</p></div>
-<div style="text-align:center">
-<a href="#" style="display:inline-block;background:#1E40AF;color:#fff;padding:16px 48px;border-radius:50px;text-decoration:none;font-weight:700;box-shadow:0 8px 24px rgba(30,64,175,0.3)">Use My Discount Now</a></div></div>
-<div style="background:#111827;padding:20px;text-align:center">
-<a href="#" style="color:#9CA3AF;font-size:12px">Unsubscribe</a></div></div></body></html>`,
-
-  'welcome-3': `<html><body style="margin:0;padding:20px;background:#f4f4f4;font-family:Arial">
-<div style="max-width:600px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
-<div style="background:#DC2626;padding:32px;text-align:center">
-<h1 style="color:#fff;margin:0;font-size:24px">LAST CHANCE! &#9200; Expires Today</h1></div>
-<div style="padding:40px;text-align:center">
-<div style="background:#FEF2F2;border-radius:16px;padding:32px;margin-bottom:24px">
-<p style="color:#DC2626;font-size:12px;font-weight:700;margin:0 0 8px;letter-spacing:2px">&#9888;&#65039; EXPIRING TODAY</p>
-<p style="color:#111827;font-size:40px;font-weight:900;margin:0 0 8px">10% OFF</p>
-<div style="background:#DC2626;color:#fff;display:inline-block;padding:10px 28px;border-radius:8px;font-size:18px;font-weight:900;letter-spacing:3px">FW-WELCOME10</div></div>
-<h2 style="color:#111827;font-size:20px;margin:0 0 16px">This is your final reminder!</h2>
-<p style="color:#6B7280;line-height:1.7;margin:0 0 24px">Your welcome discount expires at midnight tonight. Do not miss out on saving 10%!</p>
-<a href="#" style="display:inline-block;background:#DC2626;color:#fff;padding:18px 56px;border-radius:50px;text-decoration:none;font-weight:700;font-size:16px;box-shadow:0 8px 24px rgba(220,38,38,0.3)">Claim 10% Off NOW</a>
-<p style="color:#9CA3AF;font-size:12px;margin-top:16px">Offer valid until midnight tonight only</p></div>
-<div style="background:#111827;padding:20px;text-align:center">
-<a href="#" style="color:#9CA3AF;font-size:12px">Unsubscribe</a></div></div></body></html>`,
-
-  'browse-1': `<html><body style="margin:0;padding:20px;background:#f4f4f4;font-family:Arial">
-<div style="max-width:600px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
-<div style="background:linear-gradient(135deg,#7C3AED,#1E40AF);padding:32px;text-align:center">
-<h1 style="color:#fff;margin:0;font-size:24px">Still thinking about it? &#128064;</h1></div>
-<div style="padding:40px">
-<h2 style="color:#111827;font-size:22px;margin:0 0 16px">You left something behind!</h2>
-<p style="color:#6B7280;line-height:1.7;margin:0 0 24px">We noticed you were browsing our store. The items you viewed are still available — but they might not be for long!</p>
-<div style="background:#FFF7ED;border-radius:12px;padding:16px;margin-bottom:24px;text-align:center">
-<p style="color:#92400E;font-weight:700;margin:0 0 4px">&#128293; Only a few left in stock!</p></div>
-<div style="text-align:center">
-<a href="#" style="display:inline-block;background:#7C3AED;color:#fff;padding:16px 48px;border-radius:50px;text-decoration:none;font-weight:700;box-shadow:0 8px 24px rgba(124,58,237,0.3)">Continue Shopping</a></div></div>
-<div style="background:#111827;padding:20px;text-align:center">
-<a href="#" style="color:#9CA3AF;font-size:12px">Unsubscribe</a></div></div></body></html>`,
-
-  'browse-2': `<html><body style="margin:0;padding:20px;background:#f4f4f4;font-family:Arial">
-<div style="max-width:600px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
-<div style="background:#7C3AED;padding:32px;text-align:center">
-<h1 style="color:#fff;margin:0;font-size:24px">We saved your picks! &#128156; Here is 10% off</h1></div>
-<div style="padding:40px;text-align:center">
-<h2 style="color:#111827;font-size:22px;margin:0 0 16px">Come back and save!</h2>
-<p style="color:#6B7280;line-height:1.7;margin:0 0 24px">Use this exclusive comeback discount just for you!</p>
-<div style="background:#F5F3FF;border:2px dashed #7C3AED;border-radius:16px;padding:24px;margin-bottom:24px">
-<p style="color:#7C3AED;font-size:12px;font-weight:700;margin:0 0 8px;letter-spacing:2px">SPECIAL OFFER</p>
-<div style="background:#7C3AED;color:#fff;display:inline-block;padding:12px 32px;border-radius:8px;font-size:20px;font-weight:900;letter-spacing:3px">COMEBACK10</div>
-<p style="color:#6B7280;font-size:13px;margin:12px 0 0">10% off your next order</p></div>
-<a href="#" style="display:inline-block;background:#7C3AED;color:#fff;padding:16px 48px;border-radius:50px;text-decoration:none;font-weight:700;box-shadow:0 8px 24px rgba(124,58,237,0.3)">Shop With Discount</a></div>
-<div style="background:#111827;padding:20px;text-align:center">
-<a href="#" style="color:#9CA3AF;font-size:12px">Unsubscribe</a></div></div></body></html>`,
-
-  'checkout-1': `<html><body style="margin:0;padding:20px;background:#f4f4f4;font-family:Arial">
-<div style="max-width:600px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
-<div style="background:linear-gradient(135deg,#F59E0B,#EF4444);padding:32px;text-align:center">
-<h1 style="color:#fff;margin:0;font-size:24px">You forgot something! &#128722;</h1></div>
-<div style="padding:40px">
-<h2 style="color:#111827;font-size:22px;margin:0 0 16px">Your cart is waiting for you</h2>
-<p style="color:#6B7280;line-height:1.7;margin:0 0 24px">You were so close! Your items are still in your cart. Complete your purchase before they sell out!</p>
-<div style="background:#FFFBEB;border:1px solid #FCD34D;border-radius:12px;padding:20px;margin-bottom:16px">
-<p style="color:#92400E;font-weight:700;margin:0 0 4px">&#128722; Items in your cart</p>
-<p style="color:#78350F;font-size:13px;margin:0">Ready and waiting for you!</p></div>
-<div style="background:#FEF2F2;border-radius:12px;padding:16px;margin-bottom:24px;text-align:center">
-<p style="color:#DC2626;font-weight:700;margin:0">&#9888;&#65039; Items may sell out soon!</p></div>
-<div style="text-align:center">
-<a href="#" style="display:inline-block;background:#F59E0B;color:#fff;padding:18px 56px;border-radius:50px;text-decoration:none;font-weight:700;font-size:16px;box-shadow:0 8px 24px rgba(245,158,11,0.3)">Complete My Order</a></div></div>
-<div style="background:#111827;padding:20px;text-align:center">
-<a href="#" style="color:#9CA3AF;font-size:12px">Unsubscribe</a></div></div></body></html>`,
-
-  'checkout-2': `<html><body style="margin:0;padding:20px;background:#f4f4f4;font-family:Arial">
-<div style="max-width:600px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
-<div style="background:#EF4444;padding:32px;text-align:center">
-<h1 style="color:#fff;margin:0;font-size:24px">Still on the fence? Here is 10% off! &#127873;</h1></div>
-<div style="padding:40px;text-align:center">
-<h2 style="color:#111827;font-size:22px;margin:0 0 16px">Let us help you decide!</h2>
-<p style="color:#6B7280;line-height:1.7;margin:0 0 24px">Complete your purchase with this exclusive discount:</p>
-<div style="background:#FEF2F2;border:2px dashed #EF4444;border-radius:16px;padding:24px;margin-bottom:24px">
-<p style="color:#EF4444;font-size:12px;font-weight:700;margin:0 0 8px;letter-spacing:2px">EXCLUSIVE OFFER</p>
-<div style="background:#EF4444;color:#fff;display:inline-block;padding:12px 32px;border-radius:8px;font-size:22px;font-weight:900;letter-spacing:3px">SAVE10NOW</div>
-<p style="color:#6B7280;font-size:13px;margin:12px 0 0">10% off your abandoned cart</p></div>
-<a href="#" style="display:inline-block;background:#EF4444;color:#fff;padding:16px 48px;border-radius:50px;text-decoration:none;font-weight:700;box-shadow:0 8px 24px rgba(239,68,68,0.3)">Complete Purchase &amp; Save</a></div>
-<div style="background:#111827;padding:20px;text-align:center">
-<a href="#" style="color:#9CA3AF;font-size:12px">Unsubscribe</a></div></div></body></html>`,
-
-  'checkout-3': `<html><body style="margin:0;padding:20px;background:#f4f4f4;font-family:Arial">
-<div style="max-width:600px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
-<div style="background:#111827;padding:32px;text-align:center">
-<h1 style="color:#fff;margin:0;font-size:24px">Final reminder &#9200; 15% off your cart</h1>
-<p style="color:#9CA3AF;margin:8px 0 0">Our biggest cart discount ever</p></div>
-<div style="padding:40px;text-align:center">
-<div style="background:#FEF2F2;border-radius:16px;padding:32px;margin-bottom:24px">
-<p style="color:#DC2626;font-size:40px;font-weight:900;margin:0 0 8px">15% OFF</p>
-<div style="background:#DC2626;color:#fff;display:inline-block;padding:10px 28px;border-radius:8px;font-size:18px;font-weight:900;letter-spacing:3px">LASTCHANCE15</div></div>
-<p style="color:#6B7280;font-size:14px;margin:0 0 24px">This is our final email about your cart!</p>
-<a href="#" style="display:inline-block;background:#111827;color:#fff;padding:18px 56px;border-radius:50px;text-decoration:none;font-weight:700;font-size:16px">Save 15% &amp; Complete Order</a></div>
-<div style="background:#111827;padding:20px;text-align:center">
-<a href="#" style="color:#9CA3AF;font-size:12px">Unsubscribe</a></div></div></body></html>`,
-
-  'thankyou-1': `<html><body style="margin:0;padding:20px;background:#f4f4f4;font-family:Arial">
-<div style="max-width:600px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
-<div style="background:linear-gradient(135deg,#10B981,#059669);padding:32px;text-align:center">
-<div style="font-size:48px;margin-bottom:8px">&#127882;</div>
-<h1 style="color:#fff;margin:0;font-size:26px">Thank You for Your Order!</h1></div>
-<div style="padding:40px;text-align:center">
-<div style="background:#F0FDF4;border-radius:16px;padding:24px;margin-bottom:24px">
-<div style="font-size:48px;margin-bottom:12px">&#9989;</div>
-<h2 style="color:#111827;font-size:22px;margin:0 0 8px">Order Confirmed!</h2>
-<p style="color:#6B7280;font-size:14px;margin:0">Your order is being processed and will ship soon.</p></div>
-<a href="#" style="display:inline-block;background:#10B981;color:#fff;padding:16px 48px;border-radius:50px;text-decoration:none;font-weight:700;box-shadow:0 8px 24px rgba(16,185,129,0.3)">Shop More Products</a></div>
-<div style="background:#111827;padding:20px;text-align:center">
-<a href="#" style="color:#9CA3AF;font-size:12px">Unsubscribe</a></div></div></body></html>`,
-
-  'thankyou-2': `<html><body style="margin:0;padding:20px;background:#f4f4f4;font-family:Arial">
-<div style="max-width:600px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
-<div style="background:#10B981;padding:32px;text-align:center">
-<h1 style="color:#fff;margin:0;font-size:24px">We love you! &#128154; Here is 15% off</h1></div>
-<div style="padding:40px;text-align:center">
-<h2 style="color:#111827;font-size:22px;margin:0 0 16px">Thank you for being our customer!</h2>
-<p style="color:#6B7280;line-height:1.7;margin:0 0 24px">As a token of appreciation, enjoy 15% off your next order!</p>
-<div style="background:#F0FDF4;border:2px dashed #10B981;border-radius:16px;padding:24px;margin-bottom:24px">
-<p style="color:#10B981;font-size:12px;font-weight:700;margin:0 0 8px;letter-spacing:2px">THANK YOU GIFT &#127873;</p>
-<div style="background:#10B981;color:#fff;display:inline-block;padding:12px 32px;border-radius:8px;font-size:22px;font-weight:900;letter-spacing:3px">THANKYOU15</div>
-<p style="color:#6B7280;font-size:13px;margin:12px 0 0">15% off your next order</p></div>
-<a href="#" style="display:inline-block;background:#10B981;color:#fff;padding:16px 48px;border-radius:50px;text-decoration:none;font-weight:700;box-shadow:0 8px 24px rgba(16,185,129,0.3)">Shop Again &amp; Save 15%</a></div>
-<div style="background:#111827;padding:20px;text-align:center">
-<a href="#" style="color:#9CA3AF;font-size:12px">Unsubscribe</a></div></div></body></html>`,
-
-  'winback-1': `<html><body style="margin:0;padding:20px;background:#f4f4f4;font-family:Arial">
-<div style="max-width:600px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
-<div style="background:linear-gradient(135deg,#6366F1,#8B5CF6);padding:32px;text-align:center">
-<h1 style="color:#fff;margin:0;font-size:24px">We miss you! &#128156;</h1>
-<p style="color:#C4B5FD;margin:8px 0 0">It has been a while</p></div>
-<div style="padding:40px;text-align:center">
-<div style="font-size:64px;margin-bottom:16px">&#128546;</div>
-<h2 style="color:#111827;font-size:22px;margin:0 0 16px">Come back, we have missed you!</h2>
-<p style="color:#6B7280;line-height:1.7;margin:0 0 24px">Here is a special 20% discount just for you!</p>
-<div style="background:#F5F3FF;border:2px dashed #8B5CF6;border-radius:16px;padding:24px;margin-bottom:24px">
-<p style="color:#8B5CF6;font-size:12px;font-weight:700;margin:0 0 8px;letter-spacing:2px">WE MISS YOU GIFT &#128156;</p>
-<p style="color:#111827;font-size:36px;font-weight:900;margin:0 0 8px">20% OFF</p>
-<div style="background:#8B5CF6;color:#fff;display:inline-block;padding:10px 28px;border-radius:8px;font-size:18px;font-weight:900;letter-spacing:3px">MISSYOU20</div></div>
-<a href="#" style="display:inline-block;background:#8B5CF6;color:#fff;padding:18px 56px;border-radius:50px;text-decoration:none;font-weight:700;font-size:16px;box-shadow:0 8px 24px rgba(139,92,246,0.3)">Come Back &amp; Save 20%</a></div>
-<div style="background:#111827;padding:20px;text-align:center">
-<a href="#" style="color:#9CA3AF;font-size:12px">Unsubscribe</a></div></div></body></html>`,
-
-  'winback-2': `<html><body style="margin:0;padding:20px;background:#f4f4f4;font-family:Arial">
-<div style="max-width:600px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
-<div style="background:#8B5CF6;padding:32px;text-align:center">
-<h1 style="color:#fff;margin:0;font-size:24px">Look what is new! &#10024;</h1></div>
-<div style="padding:40px">
-<h2 style="color:#111827;font-size:22px;margin:0 0 16px">New products you will love!</h2>
-<p style="color:#6B7280;line-height:1.7;margin:0 0 24px">Since your last visit we added amazing new products. Here is 15% off to welcome you back!</p>
-<div style="background:#F5F3FF;border:2px dashed #8B5CF6;border-radius:16px;padding:20px;margin-bottom:24px;text-align:center">
-<div style="background:#8B5CF6;color:#fff;display:inline-block;padding:10px 28px;border-radius:8px;font-size:18px;font-weight:900;letter-spacing:3px">WELCOME15</div>
-<p style="color:#6B7280;font-size:13px;margin:8px 0 0">15% off everything</p></div>
-<div style="text-align:center">
-<a href="#" style="display:inline-block;background:#8B5CF6;color:#fff;padding:16px 48px;border-radius:50px;text-decoration:none;font-weight:700;box-shadow:0 8px 24px rgba(139,92,246,0.3)">Explore New Products</a></div></div>
-<div style="background:#111827;padding:20px;text-align:center">
-<a href="#" style="color:#9CA3AF;font-size:12px">Unsubscribe</a></div></div></body></html>`,
-
-  'winback-3': `<html><body style="margin:0;padding:20px;background:#f4f4f4;font-family:Arial">
-<div style="max-width:600px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
-<div style="background:linear-gradient(135deg,#111827,#374151);padding:32px;text-align:center">
-<h1 style="color:#fff;margin:0;font-size:24px">This is goodbye? &#128532;</h1>
-<p style="color:#9CA3AF;margin:8px 0 0">Our biggest offer ever</p></div>
-<div style="padding:40px;text-align:center">
-<h2 style="color:#111827;font-size:22px;margin:0 0 16px">One final offer before you go</h2>
-<p style="color:#6B7280;line-height:1.7;margin:0 0 24px">We do not want to lose you. Here is 25% off — our best offer ever!</p>
-<div style="background:linear-gradient(135deg,#111827,#374151);border-radius:16px;padding:32px;margin-bottom:24px">
-<p style="color:#9CA3AF;font-size:12px;font-weight:700;margin:0 0 8px;letter-spacing:2px">OUR BEST OFFER EVER</p>
-<p style="color:#fff;font-size:48px;font-weight:900;margin:0 0 8px">25% OFF</p>
-<div style="background:#fff;color:#111827;display:inline-block;padding:12px 32px;border-radius:8px;font-size:20px;font-weight:900;letter-spacing:3px">COMEBACK25</div>
-<p style="color:#9CA3AF;font-size:13px;margin:12px 0 0">Valid for 24 hours only</p></div>
-<a href="#" style="display:inline-block;background:#111827;color:#fff;padding:18px 56px;border-radius:50px;text-decoration:none;font-weight:700;font-size:16px;box-shadow:0 8px 24px rgba(0,0,0,0.3)">Claim 25% Off Now</a></div>
-<div style="background:#111827;padding:20px;text-align:center">
-<a href="#" style="color:#9CA3AF;font-size:12px">Unsubscribe</a></div></div></body></html>`,
-}
-
 interface FlowEmail {
   id: string
   name: string
@@ -264,9 +58,8 @@ const flows: Flow[] = [
 export default function FlowEditor() {
   const router = useRouter()
   const [expandedFlow, setExpandedFlow] = useState<string>('welcome')
-  const defaultEmail = flows[0]!.emails[0]!
-  const [selectedEmail, setSelectedEmail] = useState<FlowEmail>(defaultEmail)
-  const [selectedHtml, setSelectedHtml] = useState<string>(emailTemplates[defaultEmail.templateKey]!)
+  const [selectedEmail, setSelectedEmail] = useState<FlowEmail | null>(null)
+  const [selectedHtml, setSelectedHtml] = useState<string>('')
   const [showEditMenu, setShowEditMenu] = useState(false)
   const [showSubjectEditor, setShowSubjectEditor] = useState(false)
   const [showTestModal, setShowTestModal] = useState(false)
@@ -326,6 +119,9 @@ export default function FlowEditor() {
 
         setStoreData(settingsData.store)
         setStoreProducts(productsData.products || [])
+
+        // Set first email as selected
+        setSelectedEmail(flows[0]?.emails[0] ?? null)
 
         // Preload logo image before generating templates
         if (settingsData.store?.logoUrl) {
@@ -415,8 +211,8 @@ export default function FlowEditor() {
       setLoadingTemplate(false)
     }
 
-    // Fallback to static template
-    setSelectedHtml(emailTemplates[email.templateKey] || '<p style="text-align:center;padding:40px;color:#999">No template available</p>')
+    // No static fallback - show empty state
+    setSelectedHtml('')
   }
 
   const handleSendTest = async () => {
@@ -427,7 +223,7 @@ export default function FlowEditor() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           to: testEmail,
-          subject: selectedEmail.subject,
+          subject: selectedEmail?.subject,
           html: selectedHtml
         })
       })
@@ -478,10 +274,10 @@ export default function FlowEditor() {
                       <button
                         key={email.id}
                         onClick={() => handleEmailClick(email)}
-                        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all text-left ${selectedEmail.id === email.id ? 'bg-blue-50 border-l-2 border-blue-600' : 'hover:bg-gray-50'}`}
+                        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all text-left ${selectedEmail?.id === email.id ? 'bg-blue-50 border-l-2 border-blue-600' : 'hover:bg-gray-50'}`}
                       >
                         <div>
-                          <p className={`text-sm font-medium ${selectedEmail.id === email.id ? 'text-blue-700' : 'text-gray-700'}`}>
+                          <p className={`text-sm font-medium ${selectedEmail?.id === email.id ? 'text-blue-700' : 'text-gray-700'}`}>
                             {email.name}
                           </p>
                           <p className="text-xs text-gray-400 mt-0.5">{email.delay}</p>
@@ -519,7 +315,7 @@ export default function FlowEditor() {
         <div className="bg-white border-b border-gray-200 px-6 py-4 flex-shrink-0">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
-              <h3 className="font-bold text-gray-900">{selectedEmail.name} - Preview</h3>
+              <h3 className="font-bold text-gray-900">{selectedEmail?.name} - Preview</h3>
               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
                 &#9679; Active
               </span>
@@ -574,29 +370,40 @@ export default function FlowEditor() {
             </div>
             <div className="flex gap-3">
               <span className="text-gray-500 w-24">Subject:</span>
-              <span className="text-gray-900 font-medium">{selectedEmail.subject}</span>
+              <span className="text-gray-900 font-medium">{selectedEmail?.subject}</span>
             </div>
             <div className="flex gap-3">
               <span className="text-gray-500 w-24">Preview:</span>
-              <span className="text-gray-600">{selectedEmail.previewText}</span>
+              <span className="text-gray-600">{selectedEmail?.previewText}</span>
             </div>
           </div>
         </div>
 
         <div className="flex-1 overflow-auto bg-gray-100 p-6">
-          {!logoLoaded || loadingTemplate ? (
+          {!selectedEmail || !selectedHtml || !logoLoaded ? (
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
-                <svg className="animate-spin h-8 w-8 text-blue-600 mx-auto mb-3" fill="none" viewBox="0 0 24 24">
+                <svg className="animate-spin h-10 w-10 text-blue-600 mx-auto mb-4" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
                 </svg>
-                <p className="text-sm text-gray-500">{!logoLoaded ? 'Loading your brand...' : 'Generating with your brand...'}</p>
+                <p className="text-sm text-gray-500 font-medium">Loading your brand template...</p>
+                <p className="text-xs text-gray-400 mt-1">Fetching your logo and products</p>
+              </div>
+            </div>
+          ) : loadingTemplate ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center">
+                <svg className="animate-spin h-10 w-10 text-blue-600 mx-auto mb-4" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                </svg>
+                <p className="text-sm text-gray-500 font-medium">Generating with your brand...</p>
               </div>
             </div>
           ) : (
             <iframe
-              key={selectedEmail.id}
+              key={selectedEmail?.id}
               srcDoc={selectedHtml}
               className="w-full bg-white rounded-xl shadow-sm"
               style={{ height: '600px', border: 'none', maxWidth: '650px', margin: '0 auto', display: 'block' }}
@@ -618,12 +425,12 @@ export default function FlowEditor() {
             <div className="space-y-4">
               <div>
                 <label className="text-sm font-medium text-gray-700 block mb-1">Subject Line</label>
-                <input type="text" defaultValue={selectedEmail.subject}
+                <input type="text" defaultValue={selectedEmail?.subject}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 block mb-1">Preview Text</label>
-                <input type="text" defaultValue={selectedEmail.previewText}
+                <input type="text" defaultValue={selectedEmail?.previewText}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
               </div>
             </div>
@@ -670,7 +477,7 @@ export default function FlowEditor() {
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-blue-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      <p className="text-blue-600 text-xs">Sending: {selectedEmail.subject}</p>
+                      <p className="text-blue-600 text-xs">Sending: {selectedEmail?.subject}</p>
                     </div>
                   </div>
                   <div className="flex gap-3">
