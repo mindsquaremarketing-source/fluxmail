@@ -323,26 +323,7 @@ export default function FlowEditorPage() {
         body: JSON.stringify({
           to: testEmailAddress,
           subject: 'Test: Welcome Email from Fluxmail',
-          html: `
-            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#fff;">
-              <div style="background:#1E40AF;padding:40px 20px;text-align:center;">
-                <h1 style="color:#fff;margin:0;font-size:28px;">Welcome to Fluxmail!</h1>
-                <p style="color:#93C5FD;margin:10px 0 0;">Here is your 10% Off welcome gift</p>
-              </div>
-              <div style="padding:40px 20px;text-align:center;">
-                <p style="color:#374151;font-size:16px;">Use code below at checkout:</p>
-                <div style="border:2px dashed #1E40AF;display:inline-block;padding:12px 32px;margin:16px 0;border-radius:8px;">
-                  <span style="font-size:22px;font-weight:bold;letter-spacing:3px;color:#1E40AF;">FW-WELCOME10</span>
-                </div>
-                <div style="margin-top:24px;">
-                  <a href="#" style="background:#1E40AF;color:#fff;padding:14px 40px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;display:inline-block;">SHOP NOW</a>
-                </div>
-              </div>
-              <div style="background:#F3F4F6;padding:20px;text-align:center;">
-                <p style="color:#9CA3AF;font-size:12px;margin:0;">This is a test email from Fluxmail</p>
-              </div>
-            </div>
-          `,
+          html: `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:20px 0;"><tr><td align="center"><table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);"><tr><td style="background:#1E40AF;padding:32px 40px;text-align:center;"><h1 style="color:#fff;margin:0;font-size:28px;font-weight:900;letter-spacing:-0.5px;">Fluxmail</h1><p style="color:#93C5FD;margin:8px 0 0;font-size:15px;">Your email marketing partner</p></td></tr><tr><td style="padding:48px 48px 32px;text-align:center;"><div style="width:80px;height:80px;background:#EFF6FF;border-radius:50%;display:inline-block;line-height:80px;margin-bottom:24px;font-size:36px;">&#127881;</div><h2 style="color:#111827;font-size:32px;font-weight:900;margin:0 0 16px;line-height:1.2;">Welcome to Fluxmail!</h2><p style="color:#6B7280;font-size:16px;line-height:1.7;margin:0 0 32px;">Thank you for joining us! We are thrilled to have you on board.<br>As a welcome gift, here is an exclusive offer just for you.</p><table width="100%" cellpadding="0" cellspacing="0"><tr><td style="background:#EFF6FF;border:2px dashed #1E40AF;border-radius:16px;padding:28px;text-align:center;"><p style="color:#1E40AF;font-size:13px;font-weight:700;margin:0 0 8px;text-transform:uppercase;letter-spacing:2px;">Your Welcome Gift</p><p style="color:#111827;font-size:40px;font-weight:900;margin:0 0 4px;letter-spacing:4px;">10% OFF</p><p style="color:#6B7280;font-size:14px;margin:0 0 16px;">Use this code at checkout:</p><div style="background:#1E40AF;color:#fff;display:inline-block;padding:12px 32px;border-radius:8px;font-size:20px;font-weight:900;letter-spacing:3px;">FW-WELCOME10</div></td></tr></table><div style="margin-top:32px;"><a href="#" style="display:inline-block;background:#1E40AF;color:#fff;padding:18px 56px;border-radius:50px;text-decoration:none;font-weight:700;font-size:16px;letter-spacing:0.5px;box-shadow:0 8px 24px rgba(30,64,175,0.3);">Shop Now & Save</a></div></td></tr><tr><td style="background:#F9FAFB;padding:32px 48px;"><table width="100%" cellpadding="0" cellspacing="0"><tr><td width="33%" style="text-align:center;padding:0 12px;"><div style="font-size:28px;margin-bottom:8px;">&#128666;</div><p style="color:#111827;font-weight:700;font-size:13px;margin:0 0 4px;">Free Shipping</p><p style="color:#9CA3AF;font-size:12px;margin:0;">Orders over $50</p></td><td width="33%" style="text-align:center;padding:0 12px;border-left:1px solid #E5E7EB;border-right:1px solid #E5E7EB;"><div style="font-size:28px;margin-bottom:8px;">&#8617;&#65039;</div><p style="color:#111827;font-weight:700;font-size:13px;margin:0 0 4px;">Easy Returns</p><p style="color:#9CA3AF;font-size:12px;margin:0;">30-day policy</p></td><td width="33%" style="text-align:center;padding:0 12px;"><div style="font-size:28px;margin-bottom:8px;">&#128172;</div><p style="color:#111827;font-weight:700;font-size:13px;margin:0 0 4px;">24/7 Support</p><p style="color:#9CA3AF;font-size:12px;margin:0;">Always here to help</p></td></tr></table></td></tr><tr><td style="background:#111827;padding:32px 48px;text-align:center;"><p style="color:#fff;font-weight:700;font-size:16px;margin:0 0 8px;">Fluxmail</p><p style="color:#9CA3AF;font-size:12px;line-height:1.6;margin:0 0 16px;">You are receiving this because you signed up for updates.<br>We respect your privacy.</p><a href="#" style="color:#9CA3AF;font-size:12px;text-decoration:underline;">Unsubscribe</a></td></tr></table></td></tr></table></body></html>`,
         }),
       })
 
