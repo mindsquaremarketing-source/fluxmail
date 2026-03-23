@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
     }
 
     if (!store) {
-      return NextResponse.json({ error: 'Store not found' }, { status: 404 })
+      return NextResponse.json({ campaigns: [] })
     }
 
     const campaigns = await prisma.campaign.findMany({
@@ -23,6 +23,7 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: 'desc' },
     })
 
+    console.log('Found campaigns:', campaigns.length)
     return NextResponse.json({ campaigns })
   } catch (error: any) {
     console.error('Campaigns GET error:', error)
@@ -33,19 +34,21 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { storeId, name, subject, htmlContent } = body
 
-    if (!storeId || !name) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    const store = await prisma.store.findFirst({
+      orderBy: { createdAt: 'desc' }
+    })
+    if (!store) {
+      return NextResponse.json({ error: 'No store found' }, { status: 404 })
     }
 
     const campaign = await prisma.campaign.create({
       data: {
-        storeId,
-        name,
-        subject: subject || '',
-        htmlContent: htmlContent || '',
-        status: 'draft',
+        storeId: body.storeId || store.id,
+        name: body.name || `campaign_${Date.now()}`,
+        subject: body.subject || '',
+        htmlContent: body.htmlContent || '',
+        status: body.status || 'draft',
       },
     })
 
