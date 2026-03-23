@@ -1,5 +1,7 @@
 'use client'
 
+export const dynamic = 'force-dynamic'
+
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
@@ -245,7 +247,7 @@ export default function EmailEditorPage() {
   ]
 
   return (
-    <div className="flex flex-col h-screen bg-gray-100">
+    <div className="flex flex-col h-screen overflow-hidden bg-gray-100">
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200 z-10">
         <div className="flex items-center gap-3">

@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
@@ -14,37 +15,52 @@ const navItems = [
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
+  const [sidebarOpen, setSidebarOpen] = useState(true)
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex h-screen overflow-hidden bg-gray-50">
       {/* Sidebar */}
-      <aside className="w-[220px] bg-white border-r border-gray-200 flex flex-col fixed h-full">
-        <div className="px-5 py-5 border-b border-gray-200">
-          <h1 className="text-xl font-bold text-blue-700">Fluxmail</h1>
+      <div className={`flex flex-col border-r border-gray-200 bg-white transition-all duration-300 ease-in-out ${sidebarOpen ? 'w-56' : 'w-16'}`}>
+        {/* Header */}
+        <div className="flex items-center justify-between p-3 border-b border-gray-100">
+          {sidebarOpen && (
+            <span className="font-bold text-blue-700 text-lg">Fluxmail</span>
+          )}
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
         </div>
-        <nav className="flex-1 px-3 py-4 space-y-1">
+
+        {/* Nav items */}
+        <nav className="flex-1 py-3 space-y-1 px-2">
           {navItems.map((item) => {
             const isActive = pathname?.startsWith(item.href)
             return (
               <Link
                 key={item.name}
                 href={item.href}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                title={!sidebarOpen ? item.name : ''}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium ${
                   isActive
-                    ? 'bg-blue-50 text-blue-700'
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                }`}
+                    ? 'bg-blue-50 text-blue-700 border-l-4 border-blue-700'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                } ${!sidebarOpen ? 'justify-center' : ''}`}
               >
-                <item.icon active={isActive} />
-                {item.name}
+                <span className="flex-shrink-0"><item.icon active={isActive} /></span>
+                {sidebarOpen && <span>{item.name}</span>}
               </Link>
             )
           })}
         </nav>
-      </aside>
+      </div>
 
       {/* Main content */}
-      <main className="ml-[220px] flex-1 min-h-screen">
+      <main className="flex-1 overflow-auto bg-gray-50">
         {children}
       </main>
     </div>
