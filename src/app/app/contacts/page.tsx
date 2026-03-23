@@ -8,6 +8,11 @@ export default function ContactsPage() {
   const [search, setSearch] = useState('')
   const [tab, setTab] = useState('all')
   const [syncing, setSyncing] = useState(false)
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [addEmail, setAddEmail] = useState('')
+  const [addFirstName, setAddFirstName] = useState('')
+  const [addLastName, setAddLastName] = useState('')
+  const [adding, setAdding] = useState(false)
 
   // Auto sync contacts if last sync was more than 1 hour ago
   useEffect(() => {
@@ -55,11 +60,43 @@ export default function ContactsPage() {
   const subscribed = contacts.filter((c: any) => c.status === 'subscribed').length
   const unsubscribed = contacts.filter((c: any) => c.status === 'unsubscribed').length
 
+  const handleAddContact = async () => {
+    if (!addEmail.trim()) return
+    setAdding(true)
+    try {
+      const res = await fetch('/api/contacts/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: addEmail, firstName: addFirstName, lastName: addLastName })
+      })
+      if (res.ok) {
+        setShowAddModal(false)
+        setAddEmail('')
+        setAddFirstName('')
+        setAddLastName('')
+        await refreshContacts()
+      } else {
+        const data = await res.json()
+        alert(data.error || 'Failed to add contact')
+      }
+    } catch {
+      alert('Failed to add contact')
+    } finally {
+      setAdding(false)
+    }
+  }
+
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Contacts</h1>
-        <button onClick={handleSync} disabled={syncing}
+        <div className="flex items-center gap-3">
+          <button onClick={() => setShowAddModal(true)}
+            className="flex items-center gap-2 bg-blue-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-800 transition-all">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+            Add Contact
+          </button>
+          <button onClick={handleSync} disabled={syncing}
           className="flex items-center gap-2 bg-gray-900 text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-800 disabled:opacity-50 transition-all">
           {syncing ? (
             <><svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/></svg>Syncing...</>
@@ -70,6 +107,7 @@ export default function ContactsPage() {
         {state.lastContactSync > 0 && (
           <p className="text-xs text-gray-400 mt-1">Last synced: {new Date(state.lastContactSync).toLocaleString()}</p>
         )}
+        </div>
       </div>
 
       <div className="grid grid-cols-3 gap-4 mb-6">
@@ -174,6 +212,47 @@ export default function ContactsPage() {
           </div>
         )}
       </div>
+
+      {/* Add Contact Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black bg-opacity-40 backdrop-blur-sm" onClick={() => setShowAddModal(false)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-gray-900">Add Contact</h2>
+              <button onClick={() => setShowAddModal(false)} className="text-gray-400 hover:text-gray-600">&#10005;</button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700 block mb-1">Email *</label>
+                <input type="email" value={addEmail} onChange={e => setAddEmail(e.target.value)} placeholder="contact@example.com" autoFocus
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-sm font-medium text-gray-700 block mb-1">First name</label>
+                  <input type="text" value={addFirstName} onChange={e => setAddFirstName(e.target.value)} placeholder="John"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700 block mb-1">Last name</label>
+                  <input type="text" value={addLastName} onChange={e => setAddLastName(e.target.value)} placeholder="Doe"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" />
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 mt-6">
+              <button onClick={() => setShowAddModal(false)} className="px-4 py-2.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
+              <button onClick={handleAddContact} disabled={adding || !addEmail.trim()}
+                className="px-4 py-2.5 text-sm font-semibold bg-blue-700 text-white rounded-lg hover:bg-blue-800 disabled:opacity-50 flex items-center gap-2">
+                {adding ? (
+                  <><svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/></svg>Adding...</>
+                ) : 'Add Contact'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
