@@ -42,8 +42,10 @@ export async function POST(
     })
 
     const contacts = await prisma.contact.findMany({
-      where: { storeId: campaign.storeId, status: { in: ['subscribed', 'not_subscribed'] } }
+      where: { storeId: campaign.storeId, status: { not: 'unsubscribed' } }
     })
+
+    console.log('Sending to contacts:', contacts.length, contacts.map(c => c.email))
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.HOST || 'https://fluxmail-silk.vercel.app'
     const trackedHtml = addTracking(campaign.htmlContent, campaign.id, baseUrl)

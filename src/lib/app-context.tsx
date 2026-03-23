@@ -93,6 +93,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const sentCampaigns = campaigns.filter((c: any) => c.status === 'sent')
       const totalEmailsSent = sentCampaigns.reduce((sum: number, c: any) => sum + (c.emailsSent || 0), 0)
       const totalRevenue = sentCampaigns.reduce((sum: number, c: any) => sum + (Number(c.revenue) || 0), 0)
+      const totalOpens = sentCampaigns.reduce((sum: number, c: any) => sum + (c.opens || 0), 0)
+      const totalClicks = sentCampaigns.reduce((sum: number, c: any) => sum + (c.clicks || 0), 0)
 
       setState({
         store,
@@ -106,6 +108,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
           conversions: sentCampaigns.reduce((sum: number, c: any) => sum + (c.placedOrders || 0), 0),
           totalContacts: contacts.length,
           revenuePerRecipient: totalEmailsSent > 0 ? totalRevenue / totalEmailsSent : 0,
+          openRate: totalEmailsSent > 0 ? ((totalOpens / totalEmailsSent) * 100).toFixed(1) : '0',
+          clickRate: totalEmailsSent > 0 ? ((totalClicks / totalEmailsSent) * 100).toFixed(1) : '0',
         },
         loaded: true,
         lastFetch: now,
@@ -117,15 +121,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }
 
   const refreshCampaigns = async () => {
-    const res = await fetch('/api/campaigns')
-    const data = await res.json()
-    setState(prev => ({ ...prev, campaigns: data.campaigns || [] }))
+    try {
+      const res = await fetch('/api/campaigns', { cache: 'no-store', headers: { 'Cache-Control': 'no-cache' } })
+      const data = await res.json()
+      setState(prev => ({ ...prev, campaigns: data.campaigns || [] }))
+    } catch (e) {
+      console.error('Refresh campaigns failed:', e)
+    }
   }
 
   const refreshContacts = async () => {
-    const res = await fetch('/api/contacts')
-    const data = await res.json()
-    setState(prev => ({ ...prev, contacts: data.contacts || [], lastContactSync: Date.now() }))
+    try {
+      const res = await fetch('/api/contacts', { cache: 'no-store', headers: { 'Cache-Control': 'no-cache' } })
+      const data = await res.json()
+      setState(prev => ({ ...prev, contacts: data.contacts || [], lastContactSync: Date.now() }))
+    } catch {}
   }
 
   return (
