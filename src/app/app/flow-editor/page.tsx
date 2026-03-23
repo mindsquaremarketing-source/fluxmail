@@ -274,8 +274,9 @@ export default function FlowEditor() {
   const [testSending, setTestSending] = useState(false)
   const [testSuccess, setTestSuccess] = useState(false)
   const [storeData, setStoreData] = useState<{ storeName: string; primaryColor: string; logoUrl: string; website: string; products: any[] } | null>(null)
+  const [dynamicWelcomeHtml, setDynamicWelcomeHtml] = useState('')
 
-  // Fetch real store data and products on mount
+  // Fetch real store data, products, and dynamic template on mount
   useEffect(() => {
     const loadStoreData = async () => {
       try {
@@ -295,9 +296,30 @@ export default function FlowEditor() {
         }
         setStoreData(data)
 
-        // Regenerate current template with real data
-        const dynamicHtml = generateDynamicTemplate(defaultEmail.templateKey, data)
-        if (dynamicHtml) setSelectedHtml(dynamicHtml)
+        // Fetch smart dynamic welcome template from API
+        try {
+          const dynamicRes = await fetch('/api/templates/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'welcome',
+              storeData: settingsData.store || {},
+              products: productsData.products?.slice(0, 2) || []
+            })
+          })
+          const dynamicData = await dynamicRes.json()
+          if (dynamicData.html) {
+            setDynamicWelcomeHtml(dynamicData.html)
+            // If currently viewing welcome-1, update preview
+            if (defaultEmail.templateKey === 'welcome-1') {
+              setSelectedHtml(dynamicData.html)
+            }
+          }
+        } catch {
+          // Fall back to string replacement
+          const dynamicHtml = generateDynamicTemplate(defaultEmail.templateKey, data)
+          if (dynamicHtml) setSelectedHtml(dynamicHtml)
+        }
       } catch (e) {
         console.error('Failed to load store data:', e)
       }
@@ -334,6 +356,11 @@ export default function FlowEditor() {
 
   const handleEmailClick = (email: FlowEmail) => {
     setSelectedEmail(email)
+    // Use smart dynamic template for welcome-1 if available
+    if (email.templateKey === 'welcome-1' && dynamicWelcomeHtml) {
+      setSelectedHtml(dynamicWelcomeHtml)
+      return
+    }
     const dynamicHtml = storeData ? generateDynamicTemplate(email.templateKey, storeData) : null
     setSelectedHtml(dynamicHtml || emailTemplates[email.templateKey] || '<p style="text-align:center;padding:40px;color:#999">No template available</p>')
   }

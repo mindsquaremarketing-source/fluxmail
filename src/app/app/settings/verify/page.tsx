@@ -1,5 +1,6 @@
 export const dynamic = 'force-dynamic'
 import { prisma } from '@/lib/db'
+import { generateWelcomeEmail } from '@/lib/template-engine'
 
 export default async function VerifyBrand() {
   const store = await prisma.store.findFirst({
@@ -23,6 +24,15 @@ export default async function VerifyBrand() {
   const primaryColor = store.primaryColor || '#1E40AF'
   const storeName = store.companyName || store.senderName || 'Your Store'
   const logoUrl = store.logoUrl || ''
+
+  const emailHtml = generateWelcomeEmail({
+    storeName,
+    logoUrl,
+    primaryColor,
+    website: store.website || `https://${store.shopDomain}`,
+    discountCode: 'WELCOME10',
+    products,
+  })
 
   return (
     <div style={{padding:'24px',fontFamily:'Arial',background:'#f9fafb',minHeight:'100vh'}}>
@@ -106,39 +116,7 @@ export default async function VerifyBrand() {
         </div>
         <div style={{padding:'24px',background:'#F9FAFB'}}>
           <iframe
-            srcDoc={`<!DOCTYPE html><html><head><meta charset="utf-8"></head>
-<body style="margin:0;padding:20px;background:#f4f4f4;font-family:Arial">
-<table width="100%" cellpadding="0" cellspacing="0">
-<tr><td align="center">
-<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
-<tr><td style="background:${primaryColor};padding:28px 40px;text-align:center">
-${logoUrl ? `<img src="${logoUrl}" style="max-height:60px;max-width:200px;display:block;margin:0 auto" alt="${storeName}">` : `<span style="color:#fff;font-size:24px;font-weight:900">${storeName}</span>`}
-</td></tr>
-<tr><td style="padding:40px;text-align:center">
-<h1 style="color:#111827;font-size:26px;font-weight:900;margin:0 0 12px">Welcome to ${storeName}!</h1>
-<p style="color:#6B7280;font-size:15px;line-height:1.7;margin:0 0 24px">Thank you for joining us! Here is your exclusive welcome gift.</p>
-<div style="background:#EFF6FF;border:2px dashed ${primaryColor};border-radius:16px;padding:24px;margin-bottom:24px">
-<p style="color:${primaryColor};font-size:12px;font-weight:700;margin:0 0 8px;letter-spacing:2px">YOUR WELCOME GIFT</p>
-<div style="background:${primaryColor};color:#fff;display:inline-block;padding:12px 32px;border-radius:8px;font-size:22px;font-weight:900;letter-spacing:3px">WELCOME10</div>
-<p style="color:#6B7280;font-size:13px;margin:10px 0 0">10% off your first order</p>
-</div>
-<a href="${store.website || '#'}" style="display:inline-block;background:${primaryColor};color:#fff;padding:16px 48px;border-radius:50px;text-decoration:none;font-weight:700;font-size:15px">Shop Now</a>
-</td></tr>
-${products.length > 0 ? `
-<tr><td style="padding:0 40px 32px">
-<h3 style="color:#111827;font-size:16px;font-weight:700;margin:0 0 16px;text-align:center">Our Products</h3>
-<table width="100%" cellpadding="0" cellspacing="0"><tr>
-${products.slice(0, 2).map((p: any) => `<td width="48%" style="background:#F9FAFB;border-radius:12px;overflow:hidden;text-align:center;vertical-align:top">
-${p.images?.[0]?.src ? `<img src="${p.images[0].src}" width="100%" style="height:160px;object-fit:cover;display:block">` : '<div style="height:160px;background:#E5E7EB;font-size:40px;text-align:center;line-height:160px">&#128230;</div>'}
-<div style="padding:12px"><p style="color:#111827;font-weight:700;font-size:13px;margin:0 0 4px">${p.title}</p>
-<p style="color:${primaryColor};font-weight:700;font-size:14px;margin:0">$${p.variants?.[0]?.price || '0.00'}</p></div>
-</td>`).join('<td width="4%"></td>')}
-</tr></table></td></tr>` : ''}
-<tr><td style="background:#111827;padding:24px;text-align:center">
-<p style="color:#fff;font-weight:700;margin:0 0 8px">${storeName}</p>
-<a href="#" style="color:#9CA3AF;font-size:12px">Unsubscribe</a>
-</td></tr>
-</table></td></tr></table></body></html>`}
+            srcDoc={emailHtml}
             style={{width:'100%',height:'700px',border:'none',borderRadius:'12px'}}
             title="Live Preview"
           />

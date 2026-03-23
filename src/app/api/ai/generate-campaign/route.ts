@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { getContrastColor, darkenColor } from '@/lib/color-utils'
 
 const client = new Anthropic()
 
@@ -13,8 +14,11 @@ export async function POST(req: NextRequest) {
       orderBy: { createdAt: 'desc' }
     })
 
-    const primaryColor = '#1E40AF'
-    const storeName = store?.shopDomain?.replace('.myshopify.com', '') || 'Our Store'
+    const primaryColor = store?.primaryColor || '#1E40AF'
+    const storeName = store?.companyName || store?.senderName || store?.shopDomain?.replace('.myshopify.com', '') || 'Our Store'
+    const textOnPrimary = getContrastColor(primaryColor)
+    const darkPrimary = darkenColor(primaryColor, 20)
+    const logoUrl = store?.logoUrl || ''
 
     // Fetch real products from Shopify
     let realProductName = productName || 'Featured Product'
@@ -58,6 +62,9 @@ Product price: $${realProductPrice}
 Image: ${realProductImage || `https://source.unsplash.com/600x400/?${encodeURIComponent(realProductName || 'shopping,product')}`}
 Brief: ${prompt}
 Discount: ${discountCode ? `Code ${discountCode} for ${discountValue}% off` : 'No discount'}
+Text color on primary background: ${textOnPrimary}
+Header gradient: linear-gradient(135deg,${primaryColor},${darkPrimary})
+Logo: ${logoUrl ? 'Use this logo image: ' + logoUrl : 'Use store name as text logo'}
 
 Create a BEAUTIFUL HTML email with this EXACT structure:
 
