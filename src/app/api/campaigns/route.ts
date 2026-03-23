@@ -23,8 +23,9 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: 'desc' },
     })
 
-    console.log('Found campaigns:', campaigns.length)
-    return NextResponse.json({ campaigns })
+    return NextResponse.json({ campaigns }, {
+      headers: { 'Cache-Control': 'private, max-age=30, stale-while-revalidate=60' }
+    })
   } catch (error: any) {
     console.error('Campaigns GET error:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })

@@ -1,12 +1,11 @@
 import { PrismaClient } from '@prisma/client'
 
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined
+declare global {
+  var __prisma: PrismaClient | undefined
 }
 
-export const prisma =
-  globalForPrisma.prisma ??
-  new PrismaClient({
+function createPrismaClient() {
+  return new PrismaClient({
     log: ['error'],
     datasources: {
       db: {
@@ -14,13 +13,12 @@ export const prisma =
       },
     },
   })
-
-if (process.env.NODE_ENV !== 'production') {
-  globalForPrisma.prisma = prisma
 }
 
-process.on('beforeExit', async () => {
-  await prisma.$disconnect()
-})
+export const prisma = global.__prisma ?? createPrismaClient()
+
+if (process.env.NODE_ENV !== 'production') {
+  global.__prisma = prisma
+}
 
 export default prisma

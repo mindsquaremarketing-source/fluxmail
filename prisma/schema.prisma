@@ -51,6 +51,8 @@ model Contact {
   addedAt   DateTime @default(now())
 
   @@unique([storeId, email])
+  @@index([storeId])
+  @@index([storeId, status])
 }
 
 model Campaign {
@@ -66,4 +68,8 @@ model Campaign {
   placedOrders Int      @default(0)
   revenue      Float    @default(0)
   createdAt    DateTime @default(now())
+
+  @@index([storeId])
+  @@index([storeId, status])
+  @@index([createdAt])
 }

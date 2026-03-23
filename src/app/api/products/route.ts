@@ -24,7 +24,9 @@ export async function GET(req: NextRequest) {
     }
 
     const data = await response.json()
-    return NextResponse.json({ products: data.products || [] })
+    return NextResponse.json({ products: data.products || [] }, {
+      headers: { 'Cache-Control': 'private, max-age=300, stale-while-revalidate=600' }
+    })
   } catch (error: any) {
     console.error('Products fetch error:', error)
     return NextResponse.json({ products: [] })

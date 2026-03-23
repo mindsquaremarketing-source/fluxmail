@@ -16,30 +16,28 @@ export default async function Dashboard() {
     )
   }
 
-  // Get all campaigns
-  const campaigns = await prisma.campaign.findMany({
-    where: { storeId: store.id },
-    orderBy: { createdAt: 'desc' }
-  })
-
-  // Get contacts
-  const totalContacts = await prisma.contact.count({
-    where: { storeId: store.id }
-  })
-
-  const subscribedContacts = await prisma.contact.count({
-    where: { storeId: store.id, status: 'subscribed' }
-  })
-
   const thirtyDaysAgo = new Date()
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
-  const recentContacts = await prisma.contact.count({
-    where: {
-      storeId: store.id,
-      addedAt: { gte: thirtyDaysAgo }
-    }
-  })
+  // Parallel queries for speed
+  const [campaigns, totalContacts, subscribedContacts, recentContacts] = await Promise.all([
+    prisma.campaign.findMany({
+      where: { storeId: store.id },
+      orderBy: { createdAt: 'desc' }
+    }),
+    prisma.contact.count({
+      where: { storeId: store.id }
+    }),
+    prisma.contact.count({
+      where: { storeId: store.id, status: 'subscribed' }
+    }),
+    prisma.contact.count({
+      where: {
+        storeId: store.id,
+        addedAt: { gte: thirtyDaysAgo }
+      }
+    }),
+  ])
 
   // Calculate real stats from campaigns
   const sentCampaigns = campaigns.filter(c => c.status === 'sent')
