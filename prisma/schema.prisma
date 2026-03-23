@@ -73,3 +73,20 @@ model Campaign {
   @@index([storeId, status])
   @@index([createdAt])
 }
+
+model ScheduledEmail {
+  id           String    @id @default(cuid())
+  storeId      String
+  contactId    String
+  contactEmail String
+  contactName  String    @default("")
+  flowType     String
+  emailNumber  Int
+  scheduledFor DateTime
+  status       String    @default("pending")
+  sentAt       DateTime?
+  createdAt    DateTime  @default(now())
+
+  @@index([status, scheduledFor])
+  @@index([storeId])
+}
