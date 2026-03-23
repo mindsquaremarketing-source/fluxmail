@@ -16,7 +16,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "EmailWiz Pro",
+  title: "Fluxmail - Email Marketing",
   description: "AI-powered email marketing for Shopify stores",
 };
 
