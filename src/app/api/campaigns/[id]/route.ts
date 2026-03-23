@@ -22,3 +22,15 @@ export async function GET(
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    await prisma.campaign.delete({ where: { id: params.id } })
+    return NextResponse.json({ success: true })
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+}
