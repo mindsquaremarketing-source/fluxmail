@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { AppProvider } from '@/lib/app-context'
 
 const navItems = [
   { name: 'Dashboard', href: '/app/dashboard', icon: DashboardIcon },
@@ -18,6 +19,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(true)
 
   return (
+    <AppProvider>
     <div className="flex h-screen overflow-hidden bg-gray-50">
       {/* Sidebar */}
       <div className={`flex flex-col border-r border-gray-200 bg-white transition-all duration-300 ease-in-out ${sidebarOpen ? 'w-56' : 'w-16'}`}>
@@ -65,6 +67,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         {children}
       </main>
     </div>
+    </AppProvider>
   )
 }
 
