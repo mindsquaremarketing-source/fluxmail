@@ -83,7 +83,7 @@ Create a BEAUTIFUL HTML email with this EXACT structure:
 
 <!-- HERO IMAGE -->
 <tr><td style="padding:0;">
-  <img src="{PRODUCT_IMAGE}" alt="${productName}" width="600" style="width:100%;max-width:600px;height:320px;object-fit:cover;display:block;">
+  <img src="{PRODUCT_IMAGE}" alt="${productName}" border="0" width="600" style="width:100%;max-width:600px;height:auto;display:block;">
 </td></tr>
 
 <!-- MAIN CONTENT -->
