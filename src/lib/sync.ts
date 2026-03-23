@@ -69,18 +69,18 @@ export async function syncAllContacts(storeId: string, accessToken: string, shop
         update: {
           firstName: customer.firstName || null,
           lastName: customer.lastName || null,
-          status: customer.emailMarketingConsent?.marketingState === 'SUBSCRIBED'
-            ? 'subscribed'
-            : 'not_subscribed',
+          status: customer.emailMarketingConsent?.marketingState === 'UNSUBSCRIBED'
+            ? 'unsubscribed'
+            : 'subscribed',
         },
         create: {
           storeId,
           email: customer.email,
           firstName: customer.firstName || null,
           lastName: customer.lastName || null,
-          status: customer.emailMarketingConsent?.marketingState === 'SUBSCRIBED'
-            ? 'subscribed'
-            : 'not_subscribed',
+          status: customer.emailMarketingConsent?.marketingState === 'UNSUBSCRIBED'
+            ? 'unsubscribed'
+            : 'subscribed',
           source: 'shopify',
         },
       })

@@ -21,7 +21,7 @@ export async function POST(
     })
 
     const contacts = await prisma.contact.findMany({
-      where: { storeId: campaign.storeId, status: 'subscribed' }
+      where: { storeId: campaign.storeId, status: { in: ['subscribed', 'not_subscribed'] } }
     })
 
     let sent = 0
