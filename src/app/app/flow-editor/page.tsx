@@ -273,12 +273,14 @@ export default function FlowEditor() {
   const [testEmail, setTestEmail] = useState('')
   const [testSending, setTestSending] = useState(false)
   const [testSuccess, setTestSuccess] = useState(false)
-  const [storeData, setStoreData] = useState<{ storeName: string; primaryColor: string; logoUrl: string; website: string; products: any[] } | null>(null)
-  const [dynamicWelcomeHtml, setDynamicWelcomeHtml] = useState('')
+  const [storeData, setStoreData] = useState<any>(null)
+  const [storeProducts, setStoreProducts] = useState<any[]>([])
+  const [dynamicTemplates, setDynamicTemplates] = useState<Record<string, string>>({})
+  const [loadingTemplate, setLoadingTemplate] = useState(false)
 
-  // Fetch real store data, products, and dynamic template on mount
+  // Load store data and pre-generate first template on mount
   useEffect(() => {
-    const loadStoreData = async () => {
+    const init = async () => {
       try {
         const [settingsRes, productsRes] = await Promise.all([
           fetch('/api/settings'),
@@ -287,82 +289,69 @@ export default function FlowEditor() {
         const settingsData = await settingsRes.json()
         const productsData = await productsRes.json()
 
-        const data = {
-          storeName: settingsData.store?.storeName || 'Your Store',
-          primaryColor: settingsData.store?.primaryColor || '#1E40AF',
-          logoUrl: settingsData.store?.logoUrl || '',
-          website: settingsData.store?.website || '#',
-          products: productsData.products || [],
-        }
-        setStoreData(data)
+        setStoreData(settingsData.store)
+        setStoreProducts(productsData.products || [])
 
-        // Fetch smart dynamic welcome template from API
-        try {
-          const dynamicRes = await fetch('/api/templates/generate', {
+        // Pre-generate first email template
+        if (settingsData.store) {
+          const res = await fetch('/api/templates/generate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              type: 'welcome',
-              storeData: settingsData.store || {},
+              templateKey: 'welcome-1',
+              storeData: settingsData.store,
               products: productsData.products?.slice(0, 2) || []
             })
           })
-          const dynamicData = await dynamicRes.json()
-          if (dynamicData.html) {
-            setDynamicWelcomeHtml(dynamicData.html)
-            // If currently viewing welcome-1, update preview
-            if (defaultEmail.templateKey === 'welcome-1') {
-              setSelectedHtml(dynamicData.html)
-            }
+          const data = await res.json()
+          if (data.html) {
+            setDynamicTemplates(prev => ({ ...prev, 'welcome-1': data.html }))
+            setSelectedHtml(data.html)
           }
-        } catch {
-          // Fall back to string replacement
-          const dynamicHtml = generateDynamicTemplate(defaultEmail.templateKey, data)
-          if (dynamicHtml) setSelectedHtml(dynamicHtml)
         }
       } catch (e) {
         console.error('Failed to load store data:', e)
       }
     }
-    loadStoreData()
+    init()
   }, [])
 
-  const generateDynamicTemplate = (templateKey: string, data: { storeName: string; primaryColor: string; logoUrl: string; website: string; products: any[] }): string | null => {
-    const { storeName, primaryColor, products } = data
-    const productRows = products.slice(0, 2).map(p =>
-      `<td width="48%" style="background:#F9FAFB;border-radius:12px;overflow:hidden;text-align:center;">
-        ${p.images?.[0]?.src ? `<img src="${p.images[0].src}" style="width:100%;height:140px;object-fit:cover;">` : `<div style="height:140px;background:#E5E7EB;text-align:center;line-height:140px;font-size:28px;">&#128230;</div>`}
-        <div style="padding:10px;"><p style="color:#111827;font-weight:700;font-size:12px;margin:0 0 4px;">${p.title}</p><p style="color:${primaryColor};font-weight:700;font-size:13px;margin:0;">$${p.variants?.[0]?.price || '0.00'}</p></div>
-      </td>`
-    ).join('<td width="4%"></td>')
-    const productsSection = products.length > 0 ? `<tr><td style="padding:24px 40px;"><p style="color:#111827;font-size:16px;font-weight:700;margin:0 0 12px;text-align:center;">Our Products</p><table width="100%"><tr>${productRows}</tr></table></td></tr>` : ''
-
-    const base = emailTemplates[templateKey]
-    if (!base) return null
-
-    // For welcome-1, inject products section before footer
-    if (templateKey === 'welcome-1' && productsSection) {
-      return base
-        .replace(/Our Store|Your Store/g, storeName)
-        .replace(/#1E40AF/g, primaryColor)
-        .replace(/<\/div><\/div><\/body>/, `</div>${productsSection}</div></body>`)
-    }
-
-    // For all templates, swap store name and brand color
-    return base
-      .replace(/Our Store|Your Store|Fluxmail/g, storeName)
-      .replace(/#1E40AF/g, primaryColor)
-  }
-
-  const handleEmailClick = (email: FlowEmail) => {
+  const handleEmailClick = async (email: FlowEmail) => {
     setSelectedEmail(email)
-    // Use smart dynamic template for welcome-1 if available
-    if (email.templateKey === 'welcome-1' && dynamicWelcomeHtml) {
-      setSelectedHtml(dynamicWelcomeHtml)
+
+    // Use cached dynamic template if available
+    const cached = dynamicTemplates[email.templateKey]
+    if (cached) {
+      setSelectedHtml(cached)
       return
     }
-    const dynamicHtml = storeData ? generateDynamicTemplate(email.templateKey, storeData) : null
-    setSelectedHtml(dynamicHtml || emailTemplates[email.templateKey] || '<p style="text-align:center;padding:40px;color:#999">No template available</p>')
+
+    // Generate dynamic template via API
+    if (storeData) {
+      setLoadingTemplate(true)
+      try {
+        const res = await fetch('/api/templates/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            templateKey: email.templateKey,
+            storeData,
+            products: storeProducts.slice(0, 2)
+          })
+        })
+        const data = await res.json()
+        if (data.html) {
+          setDynamicTemplates(prev => ({ ...prev, [email.templateKey]: data.html }))
+          setSelectedHtml(data.html)
+          setLoadingTemplate(false)
+          return
+        }
+      } catch {}
+      setLoadingTemplate(false)
+    }
+
+    // Fallback to static template
+    setSelectedHtml(emailTemplates[email.templateKey] || '<p style="text-align:center;padding:40px;color:#999">No template available</p>')
   }
 
   const handleSendTest = async () => {
@@ -530,13 +519,25 @@ export default function FlowEditor() {
         </div>
 
         <div className="flex-1 overflow-auto bg-gray-100 p-6">
-          <iframe
-            key={selectedEmail.id}
-            srcDoc={selectedHtml}
-            className="w-full bg-white rounded-xl shadow-sm"
-            style={{ height: '600px', border: 'none', maxWidth: '650px', margin: '0 auto', display: 'block' }}
-            title="Email Preview"
-          />
+          {loadingTemplate ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center">
+                <svg className="animate-spin h-8 w-8 text-blue-600 mx-auto mb-3" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                </svg>
+                <p className="text-sm text-gray-500">Generating with your brand...</p>
+              </div>
+            </div>
+          ) : (
+            <iframe
+              key={selectedEmail.id}
+              srcDoc={selectedHtml}
+              className="w-full bg-white rounded-xl shadow-sm"
+              style={{ height: '600px', border: 'none', maxWidth: '650px', margin: '0 auto', display: 'block' }}
+              title="Email Preview"
+            />
+          )}
         </div>
       </div>
 

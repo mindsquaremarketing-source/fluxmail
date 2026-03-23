@@ -1,33 +1,45 @@
 export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
-import { generateWelcomeEmail, generateAbandonedCheckoutEmail } from '@/lib/template-engine'
+import {
+  generateWelcome1, generateWelcome2, generateWelcome3,
+  generateBrowse1, generateBrowse2,
+  generateCheckout1, generateCheckout2, generateCheckout3,
+  generateThankYou1, generateThankYou2,
+  generateWinback1, generateWinback2, generateWinback3,
+} from '@/lib/template-engine'
+
+const generators: Record<string, (d: any) => string> = {
+  'welcome-1': generateWelcome1,
+  'welcome-2': generateWelcome2,
+  'welcome-3': generateWelcome3,
+  'browse-1': generateBrowse1,
+  'browse-2': generateBrowse2,
+  'checkout-1': generateCheckout1,
+  'checkout-2': generateCheckout2,
+  'checkout-3': generateCheckout3,
+  'thankyou-1': generateThankYou1,
+  'thankyou-2': generateThankYou2,
+  'winback-1': generateWinback1,
+  'winback-2': generateWinback2,
+  'winback-3': generateWinback3,
+}
 
 export async function POST(req: NextRequest) {
   try {
-    const { type, storeData, products } = await req.json()
+    const { templateKey, storeData, products } = await req.json()
 
     const data = {
-      storeName: storeData.companyName || storeData.storeName || storeData.senderName || 'Our Store',
-      logoUrl: storeData.logoUrl || '',
-      primaryColor: storeData.primaryColor || '#1E40AF',
-      website: storeData.website || '#',
+      storeName: storeData?.companyName || storeData?.storeName || storeData?.senderName || 'Our Store',
+      logoUrl: storeData?.logoUrl || '',
+      primaryColor: storeData?.primaryColor || '#1E40AF',
+      website: storeData?.website || '#',
       products: products || [],
     }
 
-    let html = ''
+    const generator = generators[templateKey] || generateWelcome1
+    const html = generator(data)
 
-    switch (type) {
-      case 'welcome':
-        html = generateWelcomeEmail({ ...data, discountCode: 'WELCOME10' })
-        break
-      case 'checkout':
-        html = generateAbandonedCheckoutEmail({ ...data, discountCode: 'SAVE10' })
-        break
-      default:
-        html = generateWelcomeEmail({ ...data, discountCode: 'WELCOME10' })
-    }
-
-    return NextResponse.json({ html })
+    return NextResponse.json({ html, success: true })
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
