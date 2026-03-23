@@ -2,6 +2,24 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 
+function addTracking(html: string, campaignId: string, baseUrl: string): string {
+  // Add open tracking pixel before </body>
+  const pixel = `<img src="${baseUrl}/api/track/open?c=${campaignId}" width="1" height="1" style="display:none;border:0;" alt="">`
+  html = html.replace('</body>', `${pixel}</body>`)
+
+  // Add click tracking to all links (except unsubscribe)
+  html = html.replace(
+    /href="(https?:\/\/[^"]+)"/g,
+    (match, url) => {
+      if (url.includes('unsubscribe') || url.includes('track')) return match
+      const tracked = `${baseUrl}/api/track/click?c=${campaignId}&url=${encodeURIComponent(url)}`
+      return `href="${tracked}"`
+    }
+  )
+
+  return html
+}
+
 export async function POST(
   req: NextRequest,
   { params }: { params: { id: string } }
@@ -14,31 +32,40 @@ export async function POST(
       return NextResponse.json({ error: 'Campaign not found' }, { status: 404 })
     }
 
-    console.log('Campaign found:', campaign.id, campaign.status)
-
-    // Update to sending first
     await prisma.campaign.update({
       where: { id: params.id },
       data: { status: 'sending' }
+    })
+
+    const store = await prisma.store.findFirst({
+      where: { id: campaign.storeId }
     })
 
     const contacts = await prisma.contact.findMany({
       where: { storeId: campaign.storeId, status: { in: ['subscribed', 'not_subscribed'] } }
     })
 
-    console.log('Contacts found:', contacts.length)
-    console.log('Sending to contacts:', contacts.map(c => c.email))
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.HOST || 'https://fluxmail-silk.vercel.app'
+    const trackedHtml = addTracking(campaign.htmlContent, campaign.id, baseUrl)
 
     let sent = 0
+    const { Resend } = await import('resend')
+    const resend = new Resend(process.env.RESEND_API_KEY)
+
     for (const contact of contacts) {
       try {
-        const { Resend } = await import('resend')
-        const resend = new Resend(process.env.RESEND_API_KEY)
+        const personalizedHtml = trackedHtml.replace(
+          /href="[^"]*#[^"]*"[^>]*>([^<]*[Uu]nsubscribe[^<]*)<\/a>/g,
+          `href="${baseUrl}/unsubscribe?email=${encodeURIComponent(contact.email)}&store=${store?.shopDomain || ''}">${'$1'}</a>`
+        )
+
         await resend.emails.send({
-          from: 'Fluxmail <onboarding@resend.dev>',
+          from: store?.senderName
+            ? `${store.senderName} <onboarding@resend.dev>`
+            : 'Fluxmail <onboarding@resend.dev>',
           to: contact.email,
           subject: campaign.subject,
-          html: campaign.htmlContent,
+          html: personalizedHtml,
         })
         sent++
         await new Promise(r => setTimeout(r, 100))
@@ -49,13 +76,8 @@ export async function POST(
 
     await prisma.campaign.update({
       where: { id: params.id },
-      data: {
-        status: 'sent',
-        emailsSent: sent,
-      }
+      data: { status: 'sent', emailsSent: sent }
     })
-
-    console.log('Campaign updated to sent, emails:', sent)
 
     return NextResponse.json({ success: true, sent })
   } catch (error: any) {

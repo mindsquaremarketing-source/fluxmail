@@ -50,9 +50,20 @@ export default async function Dashboard() {
     (sum, c) => sum + (Number(c.revenue) || 0), 0
   )
 
+  const totalOpens = sentCampaigns.reduce(
+    (sum, c) => sum + (c.opens || 0), 0
+  )
+
+  const totalClicks = sentCampaigns.reduce(
+    (sum, c) => sum + (c.clicks || 0), 0
+  )
+
   const totalOrders = sentCampaigns.reduce(
     (sum, c) => sum + (c.placedOrders || 0), 0
   )
+
+  const openRate = totalEmailsSent > 0 ? ((totalOpens / totalEmailsSent) * 100).toFixed(1) : '0'
+  const clickRate = totalEmailsSent > 0 ? ((totalClicks / totalEmailsSent) * 100).toFixed(1) : '0'
 
   const revenuePerRecipient = totalEmailsSent > 0
     ? totalRevenue / totalEmailsSent
@@ -78,6 +89,8 @@ export default async function Dashboard() {
     roi,
     totalContacts,
     recentContacts,
+    openRate,
+    clickRate,
   }
 
   return (
