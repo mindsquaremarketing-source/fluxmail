@@ -1,655 +1,493 @@
 'use client'
-
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+
+const emailTemplates: Record<string, string> = {
+  'welcome-1': `<html><body style="margin:0;padding:20px;background:#f4f4f4;font-family:Arial">
+<div style="max-width:600px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
+<div style="background:#1E40AF;padding:32px;text-align:center">
+<h1 style="color:#fff;margin:0;font-size:26px">Welcome! &#127881;</h1>
+<p style="color:#93C5FD;margin:8px 0 0">We are so glad you are here</p></div>
+<div style="padding:40px;text-align:center">
+<h2 style="color:#111827;font-size:26px;margin:0 0 16px">Here is 10% Off Your First Order</h2>
+<p style="color:#6B7280;line-height:1.7;margin:0 0 24px">Thank you for joining! Use code below to save on your first purchase.</p>
+<div style="background:#EFF6FF;border:2px dashed #1E40AF;border-radius:16px;padding:24px;margin-bottom:24px">
+<p style="color:#1E40AF;font-size:12px;font-weight:700;margin:0 0 8px;letter-spacing:2px">YOUR WELCOME GIFT</p>
+<div style="background:#1E40AF;color:#fff;display:inline-block;padding:12px 32px;border-radius:8px;font-size:22px;font-weight:900;letter-spacing:3px">FW-WELCOME10</div>
+<p style="color:#6B7280;font-size:13px;margin:12px 0 0">10% off your entire order</p></div>
+<a href="#" style="display:inline-block;background:#1E40AF;color:#fff;padding:16px 48px;border-radius:50px;text-decoration:none;font-weight:700;font-size:15px;box-shadow:0 8px 24px rgba(30,64,175,0.3)">Shop Now</a></div>
+<div style="background:#F9FAFB;padding:24px;text-align:center">
+<span style="margin:0 16px;font-size:24px">&#128666;</span>
+<span style="margin:0 16px;font-size:24px">&#8617;&#65039;</span>
+<span style="margin:0 16px;font-size:24px">&#11088;</span></div>
+<div style="background:#111827;padding:20px;text-align:center">
+<a href="#" style="color:#9CA3AF;font-size:12px">Unsubscribe</a></div></div></body></html>`,
+
+  'welcome-2': `<html><body style="margin:0;padding:20px;background:#f4f4f4;font-family:Arial">
+<div style="max-width:600px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
+<div style="background:linear-gradient(135deg,#1E40AF,#3B82F6);padding:32px;text-align:center">
+<h1 style="color:#fff;margin:0;font-size:24px">Your discount is still waiting! &#9200;</h1></div>
+<div style="padding:40px">
+<h2 style="color:#111827;font-size:22px;margin:0 0 16px">Did you find everything you were looking for?</h2>
+<p style="color:#6B7280;line-height:1.7;margin:0 0 24px">We noticed you have not used your welcome discount yet. Here is a reminder — it expires in 48 hours!</p>
+<div style="background:#FFF7ED;border-left:4px solid #F59E0B;border-radius:8px;padding:16px;margin-bottom:24px">
+<p style="color:#92400E;font-weight:700;margin:0 0 4px">&#9200; Expires in 48 hours!</p>
+<p style="color:#78350F;font-size:13px;margin:0">Use code <strong>FW-WELCOME10</strong> for 10% off</p></div>
+<div style="text-align:center">
+<a href="#" style="display:inline-block;background:#1E40AF;color:#fff;padding:16px 48px;border-radius:50px;text-decoration:none;font-weight:700;box-shadow:0 8px 24px rgba(30,64,175,0.3)">Use My Discount Now</a></div></div>
+<div style="background:#111827;padding:20px;text-align:center">
+<a href="#" style="color:#9CA3AF;font-size:12px">Unsubscribe</a></div></div></body></html>`,
+
+  'welcome-3': `<html><body style="margin:0;padding:20px;background:#f4f4f4;font-family:Arial">
+<div style="max-width:600px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
+<div style="background:#DC2626;padding:32px;text-align:center">
+<h1 style="color:#fff;margin:0;font-size:24px">LAST CHANCE! &#9200; Expires Today</h1></div>
+<div style="padding:40px;text-align:center">
+<div style="background:#FEF2F2;border-radius:16px;padding:32px;margin-bottom:24px">
+<p style="color:#DC2626;font-size:12px;font-weight:700;margin:0 0 8px;letter-spacing:2px">&#9888;&#65039; EXPIRING TODAY</p>
+<p style="color:#111827;font-size:40px;font-weight:900;margin:0 0 8px">10% OFF</p>
+<div style="background:#DC2626;color:#fff;display:inline-block;padding:10px 28px;border-radius:8px;font-size:18px;font-weight:900;letter-spacing:3px">FW-WELCOME10</div></div>
+<h2 style="color:#111827;font-size:20px;margin:0 0 16px">This is your final reminder!</h2>
+<p style="color:#6B7280;line-height:1.7;margin:0 0 24px">Your welcome discount expires at midnight tonight. Do not miss out on saving 10%!</p>
+<a href="#" style="display:inline-block;background:#DC2626;color:#fff;padding:18px 56px;border-radius:50px;text-decoration:none;font-weight:700;font-size:16px;box-shadow:0 8px 24px rgba(220,38,38,0.3)">Claim 10% Off NOW</a>
+<p style="color:#9CA3AF;font-size:12px;margin-top:16px">Offer valid until midnight tonight only</p></div>
+<div style="background:#111827;padding:20px;text-align:center">
+<a href="#" style="color:#9CA3AF;font-size:12px">Unsubscribe</a></div></div></body></html>`,
+
+  'browse-1': `<html><body style="margin:0;padding:20px;background:#f4f4f4;font-family:Arial">
+<div style="max-width:600px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
+<div style="background:linear-gradient(135deg,#7C3AED,#1E40AF);padding:32px;text-align:center">
+<h1 style="color:#fff;margin:0;font-size:24px">Still thinking about it? &#128064;</h1></div>
+<div style="padding:40px">
+<h2 style="color:#111827;font-size:22px;margin:0 0 16px">You left something behind!</h2>
+<p style="color:#6B7280;line-height:1.7;margin:0 0 24px">We noticed you were browsing our store. The items you viewed are still available — but they might not be for long!</p>
+<div style="background:#FFF7ED;border-radius:12px;padding:16px;margin-bottom:24px;text-align:center">
+<p style="color:#92400E;font-weight:700;margin:0 0 4px">&#128293; Only a few left in stock!</p></div>
+<div style="text-align:center">
+<a href="#" style="display:inline-block;background:#7C3AED;color:#fff;padding:16px 48px;border-radius:50px;text-decoration:none;font-weight:700;box-shadow:0 8px 24px rgba(124,58,237,0.3)">Continue Shopping</a></div></div>
+<div style="background:#111827;padding:20px;text-align:center">
+<a href="#" style="color:#9CA3AF;font-size:12px">Unsubscribe</a></div></div></body></html>`,
+
+  'browse-2': `<html><body style="margin:0;padding:20px;background:#f4f4f4;font-family:Arial">
+<div style="max-width:600px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
+<div style="background:#7C3AED;padding:32px;text-align:center">
+<h1 style="color:#fff;margin:0;font-size:24px">We saved your picks! &#128156; Here is 10% off</h1></div>
+<div style="padding:40px;text-align:center">
+<h2 style="color:#111827;font-size:22px;margin:0 0 16px">Come back and save!</h2>
+<p style="color:#6B7280;line-height:1.7;margin:0 0 24px">Use this exclusive comeback discount just for you!</p>
+<div style="background:#F5F3FF;border:2px dashed #7C3AED;border-radius:16px;padding:24px;margin-bottom:24px">
+<p style="color:#7C3AED;font-size:12px;font-weight:700;margin:0 0 8px;letter-spacing:2px">SPECIAL OFFER</p>
+<div style="background:#7C3AED;color:#fff;display:inline-block;padding:12px 32px;border-radius:8px;font-size:20px;font-weight:900;letter-spacing:3px">COMEBACK10</div>
+<p style="color:#6B7280;font-size:13px;margin:12px 0 0">10% off your next order</p></div>
+<a href="#" style="display:inline-block;background:#7C3AED;color:#fff;padding:16px 48px;border-radius:50px;text-decoration:none;font-weight:700;box-shadow:0 8px 24px rgba(124,58,237,0.3)">Shop With Discount</a></div>
+<div style="background:#111827;padding:20px;text-align:center">
+<a href="#" style="color:#9CA3AF;font-size:12px">Unsubscribe</a></div></div></body></html>`,
+
+  'checkout-1': `<html><body style="margin:0;padding:20px;background:#f4f4f4;font-family:Arial">
+<div style="max-width:600px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
+<div style="background:linear-gradient(135deg,#F59E0B,#EF4444);padding:32px;text-align:center">
+<h1 style="color:#fff;margin:0;font-size:24px">You forgot something! &#128722;</h1></div>
+<div style="padding:40px">
+<h2 style="color:#111827;font-size:22px;margin:0 0 16px">Your cart is waiting for you</h2>
+<p style="color:#6B7280;line-height:1.7;margin:0 0 24px">You were so close! Your items are still in your cart. Complete your purchase before they sell out!</p>
+<div style="background:#FFFBEB;border:1px solid #FCD34D;border-radius:12px;padding:20px;margin-bottom:16px">
+<p style="color:#92400E;font-weight:700;margin:0 0 4px">&#128722; Items in your cart</p>
+<p style="color:#78350F;font-size:13px;margin:0">Ready and waiting for you!</p></div>
+<div style="background:#FEF2F2;border-radius:12px;padding:16px;margin-bottom:24px;text-align:center">
+<p style="color:#DC2626;font-weight:700;margin:0">&#9888;&#65039; Items may sell out soon!</p></div>
+<div style="text-align:center">
+<a href="#" style="display:inline-block;background:#F59E0B;color:#fff;padding:18px 56px;border-radius:50px;text-decoration:none;font-weight:700;font-size:16px;box-shadow:0 8px 24px rgba(245,158,11,0.3)">Complete My Order</a></div></div>
+<div style="background:#111827;padding:20px;text-align:center">
+<a href="#" style="color:#9CA3AF;font-size:12px">Unsubscribe</a></div></div></body></html>`,
+
+  'checkout-2': `<html><body style="margin:0;padding:20px;background:#f4f4f4;font-family:Arial">
+<div style="max-width:600px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
+<div style="background:#EF4444;padding:32px;text-align:center">
+<h1 style="color:#fff;margin:0;font-size:24px">Still on the fence? Here is 10% off! &#127873;</h1></div>
+<div style="padding:40px;text-align:center">
+<h2 style="color:#111827;font-size:22px;margin:0 0 16px">Let us help you decide!</h2>
+<p style="color:#6B7280;line-height:1.7;margin:0 0 24px">Complete your purchase with this exclusive discount:</p>
+<div style="background:#FEF2F2;border:2px dashed #EF4444;border-radius:16px;padding:24px;margin-bottom:24px">
+<p style="color:#EF4444;font-size:12px;font-weight:700;margin:0 0 8px;letter-spacing:2px">EXCLUSIVE OFFER</p>
+<div style="background:#EF4444;color:#fff;display:inline-block;padding:12px 32px;border-radius:8px;font-size:22px;font-weight:900;letter-spacing:3px">SAVE10NOW</div>
+<p style="color:#6B7280;font-size:13px;margin:12px 0 0">10% off your abandoned cart</p></div>
+<a href="#" style="display:inline-block;background:#EF4444;color:#fff;padding:16px 48px;border-radius:50px;text-decoration:none;font-weight:700;box-shadow:0 8px 24px rgba(239,68,68,0.3)">Complete Purchase &amp; Save</a></div>
+<div style="background:#111827;padding:20px;text-align:center">
+<a href="#" style="color:#9CA3AF;font-size:12px">Unsubscribe</a></div></div></body></html>`,
+
+  'checkout-3': `<html><body style="margin:0;padding:20px;background:#f4f4f4;font-family:Arial">
+<div style="max-width:600px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
+<div style="background:#111827;padding:32px;text-align:center">
+<h1 style="color:#fff;margin:0;font-size:24px">Final reminder &#9200; 15% off your cart</h1>
+<p style="color:#9CA3AF;margin:8px 0 0">Our biggest cart discount ever</p></div>
+<div style="padding:40px;text-align:center">
+<div style="background:#FEF2F2;border-radius:16px;padding:32px;margin-bottom:24px">
+<p style="color:#DC2626;font-size:40px;font-weight:900;margin:0 0 8px">15% OFF</p>
+<div style="background:#DC2626;color:#fff;display:inline-block;padding:10px 28px;border-radius:8px;font-size:18px;font-weight:900;letter-spacing:3px">LASTCHANCE15</div></div>
+<p style="color:#6B7280;font-size:14px;margin:0 0 24px">This is our final email about your cart!</p>
+<a href="#" style="display:inline-block;background:#111827;color:#fff;padding:18px 56px;border-radius:50px;text-decoration:none;font-weight:700;font-size:16px">Save 15% &amp; Complete Order</a></div>
+<div style="background:#111827;padding:20px;text-align:center">
+<a href="#" style="color:#9CA3AF;font-size:12px">Unsubscribe</a></div></div></body></html>`,
+
+  'thankyou-1': `<html><body style="margin:0;padding:20px;background:#f4f4f4;font-family:Arial">
+<div style="max-width:600px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
+<div style="background:linear-gradient(135deg,#10B981,#059669);padding:32px;text-align:center">
+<div style="font-size:48px;margin-bottom:8px">&#127882;</div>
+<h1 style="color:#fff;margin:0;font-size:26px">Thank You for Your Order!</h1></div>
+<div style="padding:40px;text-align:center">
+<div style="background:#F0FDF4;border-radius:16px;padding:24px;margin-bottom:24px">
+<div style="font-size:48px;margin-bottom:12px">&#9989;</div>
+<h2 style="color:#111827;font-size:22px;margin:0 0 8px">Order Confirmed!</h2>
+<p style="color:#6B7280;font-size:14px;margin:0">Your order is being processed and will ship soon.</p></div>
+<a href="#" style="display:inline-block;background:#10B981;color:#fff;padding:16px 48px;border-radius:50px;text-decoration:none;font-weight:700;box-shadow:0 8px 24px rgba(16,185,129,0.3)">Shop More Products</a></div>
+<div style="background:#111827;padding:20px;text-align:center">
+<a href="#" style="color:#9CA3AF;font-size:12px">Unsubscribe</a></div></div></body></html>`,
+
+  'thankyou-2': `<html><body style="margin:0;padding:20px;background:#f4f4f4;font-family:Arial">
+<div style="max-width:600px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
+<div style="background:#10B981;padding:32px;text-align:center">
+<h1 style="color:#fff;margin:0;font-size:24px">We love you! &#128154; Here is 15% off</h1></div>
+<div style="padding:40px;text-align:center">
+<h2 style="color:#111827;font-size:22px;margin:0 0 16px">Thank you for being our customer!</h2>
+<p style="color:#6B7280;line-height:1.7;margin:0 0 24px">As a token of appreciation, enjoy 15% off your next order!</p>
+<div style="background:#F0FDF4;border:2px dashed #10B981;border-radius:16px;padding:24px;margin-bottom:24px">
+<p style="color:#10B981;font-size:12px;font-weight:700;margin:0 0 8px;letter-spacing:2px">THANK YOU GIFT &#127873;</p>
+<div style="background:#10B981;color:#fff;display:inline-block;padding:12px 32px;border-radius:8px;font-size:22px;font-weight:900;letter-spacing:3px">THANKYOU15</div>
+<p style="color:#6B7280;font-size:13px;margin:12px 0 0">15% off your next order</p></div>
+<a href="#" style="display:inline-block;background:#10B981;color:#fff;padding:16px 48px;border-radius:50px;text-decoration:none;font-weight:700;box-shadow:0 8px 24px rgba(16,185,129,0.3)">Shop Again &amp; Save 15%</a></div>
+<div style="background:#111827;padding:20px;text-align:center">
+<a href="#" style="color:#9CA3AF;font-size:12px">Unsubscribe</a></div></div></body></html>`,
+
+  'winback-1': `<html><body style="margin:0;padding:20px;background:#f4f4f4;font-family:Arial">
+<div style="max-width:600px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
+<div style="background:linear-gradient(135deg,#6366F1,#8B5CF6);padding:32px;text-align:center">
+<h1 style="color:#fff;margin:0;font-size:24px">We miss you! &#128156;</h1>
+<p style="color:#C4B5FD;margin:8px 0 0">It has been a while</p></div>
+<div style="padding:40px;text-align:center">
+<div style="font-size:64px;margin-bottom:16px">&#128546;</div>
+<h2 style="color:#111827;font-size:22px;margin:0 0 16px">Come back, we have missed you!</h2>
+<p style="color:#6B7280;line-height:1.7;margin:0 0 24px">Here is a special 20% discount just for you!</p>
+<div style="background:#F5F3FF;border:2px dashed #8B5CF6;border-radius:16px;padding:24px;margin-bottom:24px">
+<p style="color:#8B5CF6;font-size:12px;font-weight:700;margin:0 0 8px;letter-spacing:2px">WE MISS YOU GIFT &#128156;</p>
+<p style="color:#111827;font-size:36px;font-weight:900;margin:0 0 8px">20% OFF</p>
+<div style="background:#8B5CF6;color:#fff;display:inline-block;padding:10px 28px;border-radius:8px;font-size:18px;font-weight:900;letter-spacing:3px">MISSYOU20</div></div>
+<a href="#" style="display:inline-block;background:#8B5CF6;color:#fff;padding:18px 56px;border-radius:50px;text-decoration:none;font-weight:700;font-size:16px;box-shadow:0 8px 24px rgba(139,92,246,0.3)">Come Back &amp; Save 20%</a></div>
+<div style="background:#111827;padding:20px;text-align:center">
+<a href="#" style="color:#9CA3AF;font-size:12px">Unsubscribe</a></div></div></body></html>`,
+
+  'winback-2': `<html><body style="margin:0;padding:20px;background:#f4f4f4;font-family:Arial">
+<div style="max-width:600px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
+<div style="background:#8B5CF6;padding:32px;text-align:center">
+<h1 style="color:#fff;margin:0;font-size:24px">Look what is new! &#10024;</h1></div>
+<div style="padding:40px">
+<h2 style="color:#111827;font-size:22px;margin:0 0 16px">New products you will love!</h2>
+<p style="color:#6B7280;line-height:1.7;margin:0 0 24px">Since your last visit we added amazing new products. Here is 15% off to welcome you back!</p>
+<div style="background:#F5F3FF;border:2px dashed #8B5CF6;border-radius:16px;padding:20px;margin-bottom:24px;text-align:center">
+<div style="background:#8B5CF6;color:#fff;display:inline-block;padding:10px 28px;border-radius:8px;font-size:18px;font-weight:900;letter-spacing:3px">WELCOME15</div>
+<p style="color:#6B7280;font-size:13px;margin:8px 0 0">15% off everything</p></div>
+<div style="text-align:center">
+<a href="#" style="display:inline-block;background:#8B5CF6;color:#fff;padding:16px 48px;border-radius:50px;text-decoration:none;font-weight:700;box-shadow:0 8px 24px rgba(139,92,246,0.3)">Explore New Products</a></div></div>
+<div style="background:#111827;padding:20px;text-align:center">
+<a href="#" style="color:#9CA3AF;font-size:12px">Unsubscribe</a></div></div></body></html>`,
+
+  'winback-3': `<html><body style="margin:0;padding:20px;background:#f4f4f4;font-family:Arial">
+<div style="max-width:600px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
+<div style="background:linear-gradient(135deg,#111827,#374151);padding:32px;text-align:center">
+<h1 style="color:#fff;margin:0;font-size:24px">This is goodbye? &#128532;</h1>
+<p style="color:#9CA3AF;margin:8px 0 0">Our biggest offer ever</p></div>
+<div style="padding:40px;text-align:center">
+<h2 style="color:#111827;font-size:22px;margin:0 0 16px">One final offer before you go</h2>
+<p style="color:#6B7280;line-height:1.7;margin:0 0 24px">We do not want to lose you. Here is 25% off — our best offer ever!</p>
+<div style="background:linear-gradient(135deg,#111827,#374151);border-radius:16px;padding:32px;margin-bottom:24px">
+<p style="color:#9CA3AF;font-size:12px;font-weight:700;margin:0 0 8px;letter-spacing:2px">OUR BEST OFFER EVER</p>
+<p style="color:#fff;font-size:48px;font-weight:900;margin:0 0 8px">25% OFF</p>
+<div style="background:#fff;color:#111827;display:inline-block;padding:12px 32px;border-radius:8px;font-size:20px;font-weight:900;letter-spacing:3px">COMEBACK25</div>
+<p style="color:#9CA3AF;font-size:13px;margin:12px 0 0">Valid for 24 hours only</p></div>
+<a href="#" style="display:inline-block;background:#111827;color:#fff;padding:18px 56px;border-radius:50px;text-decoration:none;font-weight:700;font-size:16px;box-shadow:0 8px 24px rgba(0,0,0,0.3)">Claim 25% Off Now</a></div>
+<div style="background:#111827;padding:20px;text-align:center">
+<a href="#" style="color:#9CA3AF;font-size:12px">Unsubscribe</a></div></div></body></html>`,
+}
 
 interface FlowEmail {
   id: string
   name: string
+  delay: string
+  status: string
   subject: string
   previewText: string
-  from: string
-  heroColor: string
-  heading: string
-  body: string
-  cta: string
-  ctaCode?: string
+  templateKey: string
 }
 
 interface Flow {
+  id: string
   name: string
+  count: string
   emails: FlowEmail[]
 }
 
 const flows: Flow[] = [
-  {
-    name: 'Welcome Flow',
+  { id: 'welcome', name: 'Welcome Flow', count: '3 of 3',
     emails: [
-      {
-        id: 'welcome-1',
-        name: '1st Welcome Email',
-        subject: 'Welcome to Fluxmail! 🎉',
-        previewText: 'Your welcome gift awaits',
-        from: 'Fluxmail <contact@fluxmail.com>',
-        heroColor: '#1E40AF',
-        heading: 'Welcome to Fluxmail',
-        body: "We're thrilled to have you! As a thank you for joining, here's an exclusive discount on your next order.",
-        cta: "Here's 10% Off your next order",
-        ctaCode: 'FW-WELCOME',
-      },
-      {
-        id: 'welcome-2',
-        name: '2nd Welcome Email',
-        subject: 'Your favorites are waiting ✨',
-        previewText: 'Check out our best sellers',
-        from: 'Fluxmail <contact@fluxmail.com>',
-        heroColor: '#6d28d9',
-        heading: 'Discover Our Best Sellers',
-        body: 'Our most popular products are flying off the shelves. See what everyone is loving right now.',
-        cta: 'Shop Best Sellers',
-      },
-      {
-        id: 'welcome-3',
-        name: '3rd Welcome Email',
-        subject: "Don't miss out on your discount 🎁",
-        previewText: 'Your 10% off expires soon',
-        from: 'Fluxmail <contact@fluxmail.com>',
-        heroColor: '#5b21b6',
-        heading: 'Last Chance!',
-        body: "Your welcome discount is about to expire. Don't let it go to waste — treat yourself today!",
-        cta: 'Use Your 10% Off Now',
-        ctaCode: 'FW-WELCOME',
-      },
-    ],
+      { id: 'w1', name: '1st Welcome Email', delay: 'On trigger', status: 'active', subject: 'Welcome! Here is 10% off', previewText: 'Your welcome gift awaits', templateKey: 'welcome-1' },
+      { id: 'w2', name: '2nd Welcome Email', delay: '48 hour(s) from previous', status: 'active', subject: 'Your discount is still waiting', previewText: 'Do not let your discount expire', templateKey: 'welcome-2' },
+      { id: 'w3', name: '3rd Welcome Email', delay: '2 day(s) from previous', status: 'active', subject: 'LAST CHANCE! 10% off expires today', previewText: 'Final reminder', templateKey: 'welcome-3' },
+    ]
   },
-  {
-    name: 'Browse Abandonment',
+  { id: 'browse', name: 'Browse Abandonment', count: '2 of 2',
     emails: [
-      {
-        id: 'browse-1',
-        name: '1st Browse Reminder',
-        subject: 'Still thinking about it? 👀',
-        previewText: 'The items you viewed are still available',
-        from: 'Fluxmail <contact@fluxmail.com>',
-        heroColor: '#2563eb',
-        heading: 'You Left Something Behind',
-        body: "We noticed you were checking out some great items. They're still available — come take another look!",
-        cta: 'Continue Browsing',
-      },
-      {
-        id: 'browse-2',
-        name: '2nd Browse Reminder',
-        subject: 'These are going fast ⚡',
-        previewText: "Don't miss out on your favorites",
-        from: 'Fluxmail <contact@fluxmail.com>',
-        heroColor: '#1d4ed8',
-        heading: 'Going Fast!',
-        body: 'The products you viewed are popular and selling quickly. Grab them before they are gone.',
-        cta: 'Shop Now',
-      },
-    ],
+      { id: 'b1', name: 'Browse Abandonment', delay: '1 hour from trigger', status: 'active', subject: 'Still thinking about it?', previewText: 'Items you viewed are still available', templateKey: 'browse-1' },
+      { id: 'b2', name: 'Browse Follow-up', delay: '24 hour(s) from previous', status: 'active', subject: 'We saved your picks + 10% off', previewText: 'Special offer just for you', templateKey: 'browse-2' },
+    ]
   },
-  {
-    name: 'Abandoned Checkout',
+  { id: 'checkout', name: 'Abandoned Checkout', count: '3 of 3',
     emails: [
-      {
-        id: 'checkout-1',
-        name: '1st Checkout Reminder',
-        subject: 'You left items in your cart 🛒',
-        previewText: 'Complete your purchase',
-        from: 'Fluxmail <contact@fluxmail.com>',
-        heroColor: '#dc2626',
-        heading: 'Complete Your Order',
-        body: "You're so close! Your cart is saved and ready for checkout.",
-        cta: 'Return to Cart',
-      },
-      {
-        id: 'checkout-2',
-        name: '2nd Checkout Reminder',
-        subject: "Don't forget your cart! 💫",
-        previewText: 'Your items are waiting',
-        from: 'Fluxmail <contact@fluxmail.com>',
-        heroColor: '#b91c1c',
-        heading: 'Your Cart Misses You',
-        body: 'Your items are reserved but not for long. Complete your purchase today.',
-        cta: 'Finish Checkout',
-      },
-      {
-        id: 'checkout-3',
-        name: '3rd Checkout - Discount',
-        subject: 'Special offer on your cart items 🎉',
-        previewText: 'Get 5% off to complete your order',
-        from: 'Fluxmail <contact@fluxmail.com>',
-        heroColor: '#991b1b',
-        heading: 'Here\'s a Little Extra',
-        body: "We really want you to have these items. Here's an exclusive 5% off to help you decide.",
-        cta: 'Get 5% Off Your Cart',
-        ctaCode: 'FW-CART5',
-      },
-    ],
+      { id: 'c1', name: '1st Checkout Recovery', delay: '1 hour from trigger', status: 'active', subject: 'You forgot something!', previewText: 'Your cart is waiting', templateKey: 'checkout-1' },
+      { id: 'c2', name: '2nd Checkout Recovery', delay: '24 hour(s) from previous', status: 'active', subject: 'Still deciding? Here is 10% off', previewText: 'Complete your purchase and save', templateKey: 'checkout-2' },
+      { id: 'c3', name: 'Final Checkout Recovery', delay: '48 hour(s) from previous', status: 'active', subject: 'Final reminder — 15% off your cart', previewText: 'Our biggest cart discount', templateKey: 'checkout-3' },
+    ]
   },
-  {
-    name: 'Thank You',
+  { id: 'thankyou', name: 'Thank You', count: '2 of 2',
     emails: [
-      {
-        id: 'thankyou-1',
-        name: 'Order Confirmation',
-        subject: 'Thank you for your order! 🙏',
-        previewText: 'Your order has been confirmed',
-        from: 'Fluxmail <contact@fluxmail.com>',
-        heroColor: '#059669',
-        heading: 'Thank You!',
-        body: 'Your order has been confirmed and is being prepared. We appreciate your business!',
-        cta: 'Track Your Order',
-      },
-      {
-        id: 'thankyou-2',
-        name: 'Review Request',
-        subject: 'How was your experience? ⭐',
-        previewText: 'We\'d love your feedback',
-        from: 'Fluxmail <contact@fluxmail.com>',
-        heroColor: '#047857',
-        heading: 'Share Your Experience',
-        body: 'We hope you are loving your purchase! Your review helps other customers and helps us improve.',
-        cta: 'Leave a Review',
-      },
-    ],
+      { id: 't1', name: 'Order Confirmation', delay: 'On trigger', status: 'active', subject: 'Thank you for your order!', previewText: 'Your order is confirmed', templateKey: 'thankyou-1' },
+      { id: 't2', name: 'Thank You Gift', delay: '3 day(s) from previous', status: 'active', subject: 'We love you! 15% off your next order', previewText: 'A thank you gift just for you', templateKey: 'thankyou-2' },
+    ]
   },
-  {
-    name: 'Winback Email',
+  { id: 'winback', name: 'Winback Email', count: '3 of 3',
     emails: [
-      {
-        id: 'winback-1',
-        name: '1st Winback Email',
-        subject: 'We miss you! 💜',
-        previewText: 'It\'s been a while',
-        from: 'Fluxmail <contact@fluxmail.com>',
-        heroColor: '#9333ea',
-        heading: 'We Miss You!',
-        body: "It's been a while since your last visit. We've got new arrivals we think you'll love.",
-        cta: "See What's New",
-      },
-      {
-        id: 'winback-2',
-        name: '2nd Winback Email',
-        subject: 'A special gift just for you 🎁',
-        previewText: 'Exclusive discount inside',
-        from: 'Fluxmail <contact@fluxmail.com>',
-        heroColor: '#7e22ce',
-        heading: 'Welcome Back Gift',
-        body: "We'd love to see you again. Here's an exclusive 15% off to welcome you back.",
-        cta: 'Get 15% Off',
-        ctaCode: 'FW-BACK15',
-      },
-      {
-        id: 'winback-3',
-        name: '3rd Winback - Last Chance',
-        subject: 'Last chance for your discount ⏰',
-        previewText: 'Your 15% off expires tomorrow',
-        from: 'Fluxmail <contact@fluxmail.com>',
-        heroColor: '#6b21a8',
-        heading: 'Last Chance!',
-        body: 'Your exclusive 15% discount expires tomorrow. This is your final reminder!',
-        cta: 'Use Your Discount',
-        ctaCode: 'FW-BACK15',
-      },
-    ],
-  },
-  {
-    name: 'Pop-up',
-    emails: [
-      {
-        id: 'popup-1',
-        name: 'Welcome Pop-up',
-        subject: 'Pop-up Configuration',
-        previewText: 'Shown to new visitors',
-        from: 'System',
-        heroColor: '#1E40AF',
-        heading: 'Get 10% Off',
-        body: 'Sign up for our newsletter and get 10% off your first order. Join thousands of happy customers!',
-        cta: 'Subscribe & Save',
-        ctaCode: 'FW-POPUP10',
-      },
-      {
-        id: 'popup-2',
-        name: 'Exit Intent Pop-up',
-        subject: 'Exit Intent Configuration',
-        previewText: 'Shown when user tries to leave',
-        from: 'System',
-        heroColor: '#dc2626',
-        heading: 'Wait! Before You Go...',
-        body: "Don't leave empty-handed! Get a special discount just for you.",
-        cta: 'Claim My Discount',
-        ctaCode: 'FW-EXIT10',
-      },
-    ],
+      { id: 'wb1', name: 'We Miss You', delay: '30 days from last order', status: 'active', subject: 'We miss you! 20% off inside', previewText: 'Come back and save big', templateKey: 'winback-1' },
+      { id: 'wb2', name: 'New Products', delay: '7 day(s) from previous', status: 'active', subject: 'Look what is new!', previewText: 'Amazing new products', templateKey: 'winback-2' },
+      { id: 'wb3', name: 'Final Winback', delay: '7 day(s) from previous', status: 'active', subject: 'Our best offer yet — 25% off', previewText: 'One final offer', templateKey: 'winback-3' },
+    ]
   },
 ]
 
-const triggerInfo: Record<string, { addedWhen: string; removedWhen: string }> = {
-  'Welcome Flow': {
-    addedWhen: 'Valid email entered in popup form',
-    removedWhen: 'Places order or was in flow last 7 days',
-  },
-  'Browse Abandonment': {
-    addedWhen: 'User views a product page without adding to cart',
-    removedWhen: 'Adds item to cart or places order',
-  },
-  'Abandoned Checkout': {
-    addedWhen: 'User starts checkout but does not complete',
-    removedWhen: 'Completes purchase or was in flow last 3 days',
-  },
-  'Thank You': {
-    addedWhen: 'Customer places an order',
-    removedWhen: 'N/A — single sequence per order',
-  },
-  'Winback Email': {
-    addedWhen: 'Customer inactive for 60+ days',
-    removedWhen: 'Places a new order or was in flow last 30 days',
-  },
-  'Pop-up': {
-    addedWhen: 'New visitor lands on storefront',
-    removedWhen: 'Submits email or closes popup',
-  },
-}
-
-const emailDelays: Record<string, string> = {
-  'welcome-1': 'On trigger',
-  'welcome-2': '48 hour(s) from previous',
-  'welcome-3': '72 hour(s) from previous',
-  'browse-1': '1 hour(s) from trigger',
-  'browse-2': '24 hour(s) from previous',
-  'checkout-1': '1 hour(s) from trigger',
-  'checkout-2': '24 hour(s) from previous',
-  'checkout-3': '48 hour(s) from previous',
-  'thankyou-1': 'On trigger',
-  'thankyou-2': '7 day(s) from previous',
-  'winback-1': 'On trigger',
-  'winback-2': '3 day(s) from previous',
-  'winback-3': '7 day(s) from previous',
-  'popup-1': 'On trigger',
-  'popup-2': 'On exit intent',
-}
-
-function generateEmailHtml(email: FlowEmail): string {
-  const discountSection = email.ctaCode ? `<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;"><tr><td style="background:#EFF6FF;border:2px dashed ${email.heroColor};border-radius:16px;padding:28px;text-align:center;"><p style="color:${email.heroColor};font-size:13px;font-weight:700;margin:0 0 8px;text-transform:uppercase;letter-spacing:2px;">Your Exclusive Offer</p><p style="color:#111827;font-size:36px;font-weight:900;margin:0 0 4px;letter-spacing:4px;">${email.ctaCode}</p><p style="color:#6B7280;font-size:14px;margin:0;">Use this code at checkout</p></td></tr></table>` : ''
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:20px 0;"><tr><td align="center"><table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);"><tr><td style="background:${email.heroColor};padding:32px 40px;text-align:center;"><h1 style="color:#fff;margin:0;font-size:28px;font-weight:900;letter-spacing:-0.5px;">Fluxmail</h1><p style="color:rgba(255,255,255,0.8);margin:8px 0 0;font-size:14px;">${email.from}</p></td></tr><tr><td style="padding:48px 48px 32px;text-align:center;"><h2 style="color:#111827;font-size:32px;font-weight:900;margin:0 0 16px;line-height:1.2;">${email.heading}</h2><p style="color:#6B7280;font-size:16px;line-height:1.7;margin:0 0 32px;">${email.body}</p>${discountSection}<div style="margin-top:8px;"><a href="#" style="display:inline-block;background:${email.heroColor};color:#fff;padding:18px 56px;border-radius:50px;text-decoration:none;font-weight:700;font-size:16px;letter-spacing:0.5px;box-shadow:0 8px 24px rgba(0,0,0,0.15);">${email.ctaCode ? 'Shop Now' : email.cta}</a></div></td></tr><tr><td style="background:#F9FAFB;padding:32px 48px;"><table width="100%" cellpadding="0" cellspacing="0"><tr><td width="33%" style="text-align:center;padding:0 12px;"><div style="font-size:28px;margin-bottom:8px;">&#128666;</div><p style="color:#111827;font-weight:700;font-size:13px;margin:0 0 4px;">Free Shipping</p><p style="color:#9CA3AF;font-size:12px;margin:0;">Orders over $50</p></td><td width="33%" style="text-align:center;padding:0 12px;border-left:1px solid #E5E7EB;border-right:1px solid #E5E7EB;"><div style="font-size:28px;margin-bottom:8px;">&#8617;&#65039;</div><p style="color:#111827;font-weight:700;font-size:13px;margin:0 0 4px;">Easy Returns</p><p style="color:#9CA3AF;font-size:12px;margin:0;">30-day policy</p></td><td width="33%" style="text-align:center;padding:0 12px;"><div style="font-size:28px;margin-bottom:8px;">&#11088;</div><p style="color:#111827;font-weight:700;font-size:13px;margin:0 0 4px;">Top Rated</p><p style="color:#9CA3AF;font-size:12px;margin:0;">Loved by customers</p></td></tr></table></td></tr><tr><td style="background:#111827;padding:32px 48px;text-align:center;"><p style="color:#fff;font-weight:700;font-size:16px;margin:0 0 8px;">Fluxmail</p><p style="color:#9CA3AF;font-size:12px;line-height:1.6;margin:0 0 16px;">You are receiving this because you signed up for updates.<br>We respect your privacy.</p><a href="#" style="color:#9CA3AF;font-size:12px;text-decoration:underline;">Unsubscribe</a></td></tr></table></td></tr></table></body></html>`
-}
-
-export default function FlowEditorPage() {
+export default function FlowEditor() {
   const router = useRouter()
-  const [expandedFlow, setExpandedFlow] = useState<string>('Welcome Flow')
-  const [selectedEmail, setSelectedEmail] = useState<FlowEmail>(flows[0].emails[0])
-  const [selectedEmailHtml, setSelectedEmailHtml] = useState<string>('')
-  const [onlyNewContacts, setOnlyNewContacts] = useState(true)
+  const [expandedFlow, setExpandedFlow] = useState<string>('welcome')
+  const defaultEmail = flows[0]!.emails[0]!
+  const [selectedEmail, setSelectedEmail] = useState<FlowEmail>(defaultEmail)
+  const [selectedHtml, setSelectedHtml] = useState<string>(emailTemplates[defaultEmail.templateKey]!)
   const [showEditMenu, setShowEditMenu] = useState(false)
   const [showSubjectEditor, setShowSubjectEditor] = useState(false)
-  const [showTemplateEditor, setShowTemplateEditor] = useState(false)
-  const [showTestEmailModal, setShowTestEmailModal] = useState(false)
-  const [testEmailAddress, setTestEmailAddress] = useState('')
-  const [testEmailSending, setTestEmailSending] = useState(false)
-  const [testEmailSuccess, setTestEmailSuccess] = useState(false)
-  const [testEmailError, setTestEmailError] = useState('')
+  const [showTestModal, setShowTestModal] = useState(false)
+  const [testEmail, setTestEmail] = useState('')
+  const [testSending, setTestSending] = useState(false)
+  const [testSuccess, setTestSuccess] = useState(false)
 
-  // Set initial email HTML on mount
-  useEffect(() => {
-    setSelectedEmailHtml(generateEmailHtml(flows[0].emails[0]))
-  }, [])
-
-  const toggleFlow = (flowName: string) => {
-    setExpandedFlow(expandedFlow === flowName ? '' : flowName)
-  }
-
-  const selectEmail = (email: FlowEmail) => {
+  const handleEmailClick = (email: any) => {
     setSelectedEmail(email)
-    setSelectedEmailHtml(generateEmailHtml(email))
+    setSelectedHtml(emailTemplates[email.templateKey] || '<p style="text-align:center;padding:40px;color:#999">No template available</p>')
   }
 
-  const currentTrigger = triggerInfo[expandedFlow] || triggerInfo['Welcome Flow']
-
-  const handleSendTestEmail = () => {
-    setShowEditMenu(false)
-    setTestEmailSuccess(false)
-    setTestEmailError('')
-    setTestEmailAddress('')
-    setShowTestEmailModal(true)
-  }
-
-  const handleSubmitTestEmail = async () => {
-    if (!testEmailAddress) {
-      setTestEmailError('Please enter an email address')
-      return
-    }
-    if (!testEmailAddress.includes('@')) {
-      setTestEmailError('Please enter a valid email address')
-      return
-    }
-
-    setTestEmailSending(true)
-    setTestEmailError('')
-
+  const handleSendTest = async () => {
+    setTestSending(true)
     try {
       const res = await fetch('/api/flow-emails/test', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          to: testEmailAddress,
-          subject: 'Test: Welcome Email from Fluxmail',
-          html: `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:20px 0;"><tr><td align="center"><table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);"><tr><td style="background:#1E40AF;padding:32px 40px;text-align:center;"><h1 style="color:#fff;margin:0;font-size:28px;font-weight:900;letter-spacing:-0.5px;">Fluxmail</h1><p style="color:#93C5FD;margin:8px 0 0;font-size:15px;">Your email marketing partner</p></td></tr><tr><td style="padding:48px 48px 32px;text-align:center;"><div style="width:80px;height:80px;background:#EFF6FF;border-radius:50%;display:inline-block;line-height:80px;margin-bottom:24px;font-size:36px;">&#127881;</div><h2 style="color:#111827;font-size:32px;font-weight:900;margin:0 0 16px;line-height:1.2;">Welcome to Fluxmail!</h2><p style="color:#6B7280;font-size:16px;line-height:1.7;margin:0 0 32px;">Thank you for joining us! We are thrilled to have you on board.<br>As a welcome gift, here is an exclusive offer just for you.</p><table width="100%" cellpadding="0" cellspacing="0"><tr><td style="background:#EFF6FF;border:2px dashed #1E40AF;border-radius:16px;padding:28px;text-align:center;"><p style="color:#1E40AF;font-size:13px;font-weight:700;margin:0 0 8px;text-transform:uppercase;letter-spacing:2px;">Your Welcome Gift</p><p style="color:#111827;font-size:40px;font-weight:900;margin:0 0 4px;letter-spacing:4px;">10% OFF</p><p style="color:#6B7280;font-size:14px;margin:0 0 16px;">Use this code at checkout:</p><div style="background:#1E40AF;color:#fff;display:inline-block;padding:12px 32px;border-radius:8px;font-size:20px;font-weight:900;letter-spacing:3px;">FW-WELCOME10</div></td></tr></table><div style="margin-top:32px;"><a href="#" style="display:inline-block;background:#1E40AF;color:#fff;padding:18px 56px;border-radius:50px;text-decoration:none;font-weight:700;font-size:16px;letter-spacing:0.5px;box-shadow:0 8px 24px rgba(30,64,175,0.3);">Shop Now & Save</a></div></td></tr><tr><td style="background:#F9FAFB;padding:32px 48px;"><table width="100%" cellpadding="0" cellspacing="0"><tr><td width="33%" style="text-align:center;padding:0 12px;"><div style="font-size:28px;margin-bottom:8px;">&#128666;</div><p style="color:#111827;font-weight:700;font-size:13px;margin:0 0 4px;">Free Shipping</p><p style="color:#9CA3AF;font-size:12px;margin:0;">Orders over $50</p></td><td width="33%" style="text-align:center;padding:0 12px;border-left:1px solid #E5E7EB;border-right:1px solid #E5E7EB;"><div style="font-size:28px;margin-bottom:8px;">&#8617;&#65039;</div><p style="color:#111827;font-weight:700;font-size:13px;margin:0 0 4px;">Easy Returns</p><p style="color:#9CA3AF;font-size:12px;margin:0;">30-day policy</p></td><td width="33%" style="text-align:center;padding:0 12px;"><div style="font-size:28px;margin-bottom:8px;">&#128172;</div><p style="color:#111827;font-weight:700;font-size:13px;margin:0 0 4px;">24/7 Support</p><p style="color:#9CA3AF;font-size:12px;margin:0;">Always here to help</p></td></tr></table></td></tr><tr><td style="background:#111827;padding:32px 48px;text-align:center;"><p style="color:#fff;font-weight:700;font-size:16px;margin:0 0 8px;">Fluxmail</p><p style="color:#9CA3AF;font-size:12px;line-height:1.6;margin:0 0 16px;">You are receiving this because you signed up for updates.<br>We respect your privacy.</p><a href="#" style="color:#9CA3AF;font-size:12px;text-decoration:underline;">Unsubscribe</a></td></tr></table></td></tr></table></body></html>`,
-        }),
+          to: testEmail,
+          subject: selectedEmail.subject,
+          html: selectedHtml
+        })
       })
-
-      if (res.ok) {
-        setTestEmailSuccess(true)
-        setTestEmailSending(false)
-      } else {
-        const data = await res.json()
-        setTestEmailError(data.error || 'Failed to send test email')
-        setTestEmailSending(false)
-      }
-    } catch (err: any) {
-      setTestEmailError(err.message)
-      setTestEmailSending(false)
+      if (res.ok) setTestSuccess(true)
+    } catch (e) {
+      alert('Failed to send')
+    } finally {
+      setTestSending(false)
     }
   }
 
   return (
-    <div className="flex h-[calc(100vh-0px)] bg-gray-50">
-      {/* Left Panel - Flow Selector */}
-      <div className="w-[35%] border-r border-gray-200 bg-white overflow-y-auto">
-        <div className="px-5 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Flow Editor</h2>
-          <p className="text-xs text-gray-500 mt-1">View and edit your flows, emails, and pop-ups.</p>
+    <div className="flex h-screen overflow-hidden bg-gray-50">
+
+      {/* LEFT PANEL */}
+      <div className="w-80 bg-white border-r border-gray-200 flex flex-col overflow-hidden flex-shrink-0">
+        <div className="p-4 border-b border-gray-100">
+          <h2 className="font-bold text-gray-900">Flow Editor</h2>
+          <p className="text-xs text-gray-500 mt-0.5">View and edit your email flows</p>
         </div>
 
-        {/* Flow Accordion */}
-        <div className="divide-y divide-gray-100">
-          {flows.map((flow) => (
-            <div key={flow.name}>
-              {/* Flow Header */}
-              <button
-                onClick={() => toggleFlow(flow.name)}
-                className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-gray-50 transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="#6b7280"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className={`transition-transform ${expandedFlow === flow.name ? 'rotate-90' : ''}`}
-                  >
-                    <polyline points="9 18 15 12 9 6" />
-                  </svg>
-                  <span className="text-sm font-medium text-gray-900">{flow.name}</span>
-                </div>
-                <span className="flex items-center gap-1.5 text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-                  {flow.emails.length} of {flow.emails.length}
-                </span>
-              </button>
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-3">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide px-2 mb-2">Flow Selector</p>
+            {flows.map(flow => (
+              <div key={flow.id} className="mb-1">
+                <button
+                  onClick={() => setExpandedFlow(expandedFlow === flow.id ? '' : flow.id)}
+                  className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 text-gray-400 transition-transform ${expandedFlow === flow.id ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                    <span className="text-sm font-semibold text-gray-800">{flow.name}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-400">{flow.count}</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                </button>
 
-              {/* Flow Emails */}
-              {expandedFlow === flow.name && (
-                <div className="bg-gray-50 border-t border-gray-100">
-                  {flow.emails.map((email) => (
-                    <button
-                      key={email.id}
-                      onClick={() => selectEmail(email)}
-                      className={`w-full flex items-center justify-between px-5 pl-12 py-3 text-left transition-colors ${
-                        selectedEmail.id === email.id
-                          ? 'bg-blue-50 border-l-2 border-blue-600'
-                          : 'hover:bg-gray-100 border-l-2 border-transparent'
-                      }`}
-                    >
-                      <div>
-                        <span className={`text-sm ${selectedEmail.id === email.id ? 'text-blue-700 font-medium' : 'text-gray-700'}`}>
-                          {email.name}
+                {expandedFlow === flow.id && (
+                  <div className="ml-4 mt-1 space-y-1">
+                    {flow.emails.map(email => (
+                      <button
+                        key={email.id}
+                        onClick={() => handleEmailClick(email)}
+                        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all text-left ${selectedEmail.id === email.id ? 'bg-blue-50 border-l-2 border-blue-600' : 'hover:bg-gray-50'}`}
+                      >
+                        <div>
+                          <p className={`text-sm font-medium ${selectedEmail.id === email.id ? 'text-blue-700' : 'text-gray-700'}`}>
+                            {email.name}
+                          </p>
+                          <p className="text-xs text-gray-400 mt-0.5">{email.delay}</p>
+                        </div>
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 flex-shrink-0">
+                          &#9679; Active
                         </span>
-                        <p className="text-[10px] text-gray-400 mt-0.5">Delay: {emailDelays[email.id] || 'On trigger'}</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-50 text-green-700">
-                          <span className="w-1 h-1 rounded-full bg-green-500"></span>
-                          Active
-                        </span>
-                        <button
-                          onClick={(e) => e.stopPropagation()}
-                          className="text-gray-400 hover:text-gray-600 p-1"
-                        >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                            <circle cx="12" cy="5" r="2" />
-                            <circle cx="12" cy="12" r="2" />
-                            <circle cx="12" cy="19" r="2" />
-                          </svg>
-                        </button>
-                      </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="p-4 border-t border-gray-100 mt-2">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Triggers &amp; Funnel</p>
+            <div className="bg-gray-50 rounded-xl p-3 text-xs text-gray-600 space-y-2">
+              <div>
+                <p className="font-semibold text-gray-700 mb-1">User added when:</p>
+                <p>&#8226; Valid email entered in popup</p>
+              </div>
+              <div>
+                <p className="font-semibold text-gray-700 mb-1">User removed when:</p>
+                <p>&#8226; Places an order</p>
+                <p>&#8226; Was in flow last 7 days</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* RIGHT PANEL */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="bg-white border-b border-gray-200 px-6 py-4 flex-shrink-0">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <h3 className="font-bold text-gray-900">{selectedEmail.name} - Preview</h3>
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
+                &#9679; Active
+              </span>
+            </div>
+
+            <div className="relative">
+              <button
+                onClick={() => setShowEditMenu(!showEditMenu)}
+                className="flex items-center gap-2 bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-800"
+              >
+                Edit
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {showEditMenu && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setShowEditMenu(false)} />
+                  <div className="absolute right-0 top-10 bg-white border border-gray-200 rounded-xl shadow-xl z-50 w-56 py-1">
+                    <button onClick={() => { setShowEditMenu(false); setShowSubjectEditor(true) }}
+                      className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                      Edit Subject Line
                     </button>
-                  ))}
-                </div>
+                    <button onClick={() => { setShowEditMenu(false); router.push('/app/flow-editor/email-editor') }}
+                      className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+                      </svg>
+                      Edit Email Template
+                    </button>
+                    <div className="border-t border-gray-100 my-1" />
+                    <button onClick={() => { setShowEditMenu(false); setTestSuccess(false); setTestEmail(''); setShowTestModal(true) }}
+                      className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                      </svg>
+                      Send Test Email
+                    </button>
+                  </div>
+                </>
               )}
             </div>
-          ))}
-        </div>
+          </div>
 
-        {/* Triggers & Funnel */}
-        <div className="border-t border-gray-200 mt-2">
-          <div className="px-5 py-4">
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">Triggers &amp; Funnel</h3>
-            <div className="space-y-3">
-              <div className="bg-gray-50 rounded-lg p-3">
-                <p className="text-[11px] font-medium text-gray-500 uppercase tracking-wider mb-1">User added to funnel when</p>
-                <p className="text-sm text-gray-800">{currentTrigger.addedWhen}</p>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-3">
-                <p className="text-[11px] font-medium text-gray-500 uppercase tracking-wider mb-1">User removed when</p>
-                <p className="text-sm text-gray-800">{currentTrigger.removedWhen}</p>
-              </div>
-              <label className="flex items-center gap-2 px-1 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={onlyNewContacts}
-                  onChange={(e) => setOnlyNewContacts(e.target.checked)}
-                  className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-                <span className="text-sm text-gray-700">Only send to new contacts</span>
-              </label>
+          <div className="space-y-1.5 text-sm">
+            <div className="flex gap-3">
+              <span className="text-gray-500 w-24">From:</span>
+              <span className="text-gray-900 font-medium">Fluxmail &lt;onboarding@resend.dev&gt;</span>
+            </div>
+            <div className="flex gap-3">
+              <span className="text-gray-500 w-24">Subject:</span>
+              <span className="text-gray-900 font-medium">{selectedEmail.subject}</span>
+            </div>
+            <div className="flex gap-3">
+              <span className="text-gray-500 w-24">Preview:</span>
+              <span className="text-gray-600">{selectedEmail.previewText}</span>
             </div>
           </div>
+        </div>
+
+        <div className="flex-1 overflow-auto bg-gray-100 p-6">
+          <iframe
+            key={selectedEmail.id}
+            srcDoc={selectedHtml}
+            className="w-full bg-white rounded-xl shadow-sm"
+            style={{ height: '600px', border: 'none', maxWidth: '650px', margin: '0 auto', display: 'block' }}
+            title="Email Preview"
+          />
         </div>
       </div>
 
-      {/* Right Panel - Email Preview */}
-      <div className="w-[65%] overflow-y-auto p-6">
-        {/* Email Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <h2 className="text-xl font-semibold text-gray-900">{selectedEmail.name}</h2>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
-              Active
-            </span>
-          </div>
-          <div className="relative">
-            <button
-              onClick={() => setShowEditMenu(!showEditMenu)}
-              className="flex items-center gap-2 bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-800"
-            >
-              Edit
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-
-            {showEditMenu && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setShowEditMenu(false)} />
-                <div className="absolute right-0 top-10 bg-white border border-gray-200 rounded-lg shadow-lg z-50 w-64 py-1">
-                  <button
-                    onClick={() => { setShowEditMenu(false); setShowSubjectEditor(true) }}
-                    className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                    Edit Subject Line &amp; Preview Text
-                  </button>
-                  <button
-                    onClick={() => { setShowEditMenu(false); router.push('/app/flow-editor/email-editor') }}
-                    className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
-                    </svg>
-                    Edit Email Template
-                  </button>
-                  <div className="border-t border-gray-100 my-1" />
-                  <button
-                    onClick={handleSendTestEmail}
-                    className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                    </svg>
-                    Send Test Email
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Email Meta */}
-        <div className="bg-white rounded-xl border border-gray-200 mb-6 shadow-sm">
-          <div className="divide-y divide-gray-100">
-            <div className="flex px-5 py-3">
-              <span className="text-sm text-gray-500 w-28">From</span>
-              <span className="text-sm text-gray-700">{selectedEmail.from}</span>
-            </div>
-            <div className="flex px-5 py-3">
-              <span className="text-sm text-gray-500 w-28">Subject Line</span>
-              <span className="text-sm font-semibold text-gray-900">{selectedEmail.subject}</span>
-            </div>
-            <div className="flex px-5 py-3">
-              <span className="text-sm text-gray-500 w-28">Preview Text</span>
-              <span className="text-sm text-gray-500 italic">{selectedEmail.previewText}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Email Preview */}
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-          <div className="px-5 py-3 border-b border-gray-200 bg-gray-50">
-            <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Email Preview</span>
-          </div>
-          <div className="p-4 bg-gray-100">
-            <iframe
-              key={selectedEmail.id}
-              srcDoc={selectedEmailHtml}
-              className="w-full bg-white rounded-xl shadow-sm"
-              style={{ height: '600px', border: 'none' }}
-              title="Email Preview"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Subject Line Editor Modal */}
+      {/* Subject Editor Modal */}
       {showSubjectEditor && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-          <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-lg">
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black bg-opacity-40 backdrop-blur-sm" onClick={() => setShowSubjectEditor(false)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">Edit Subject Line &amp; Preview Text</h2>
-              <button onClick={() => setShowSubjectEditor(false)} className="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
+              <h2 className="text-lg font-bold">Edit Subject Line</h2>
+              <button onClick={() => setShowSubjectEditor(false)} className="text-gray-400 hover:text-gray-600">&#10005;</button>
             </div>
             <div className="space-y-4">
               <div>
                 <label className="text-sm font-medium text-gray-700 block mb-1">Subject Line</label>
-                <input
-                  type="text"
-                  defaultValue={selectedEmail.subject}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Enter subject line..."
-                />
+                <input type="text" defaultValue={selectedEmail.subject}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 block mb-1">Preview Text</label>
-                <input
-                  type="text"
-                  defaultValue={selectedEmail.previewText}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Enter preview text..."
-                />
-                <p className="text-xs text-gray-400 mt-1">Shown in inbox before opening the email</p>
+                <input type="text" defaultValue={selectedEmail.previewText}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
               </div>
             </div>
             <div className="flex justify-end gap-3 mt-6">
               <button onClick={() => setShowSubjectEditor(false)} className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
-              <button onClick={() => setShowSubjectEditor(false)} className="px-4 py-2 text-sm bg-blue-700 text-white rounded-lg hover:bg-blue-800">Save Changes</button>
+              <button onClick={() => setShowSubjectEditor(false)} className="px-4 py-2 text-sm bg-blue-700 text-white rounded-lg hover:bg-blue-800">Save</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Template Editor Modal */}
-      {showTemplateEditor && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-          <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-2xl">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">Edit Email Template</h2>
-              <button onClick={() => setShowTemplateEditor(false)} className="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
-            </div>
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1">Heading</label>
-                <input type="text" defaultValue={selectedEmail.heading} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1">Body Text</label>
-                <textarea defaultValue={selectedEmail.body} rows={3} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none" />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1">CTA Button Text</label>
-                <input type="text" defaultValue={selectedEmail.cta} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
-              </div>
-              {selectedEmail.ctaCode && (
-                <div>
-                  <label className="text-sm font-medium text-gray-700 block mb-1">Discount Code</label>
-                  <input type="text" defaultValue={selectedEmail.ctaCode} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
-                </div>
-              )}
-              <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1">Hero Color</label>
-                <div className="flex items-center gap-2">
-                  <input type="color" defaultValue={selectedEmail.heroColor} className="w-10 h-10 rounded border border-gray-200 cursor-pointer p-0.5" />
-                  <input type="text" defaultValue={selectedEmail.heroColor} className="w-28 border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
-                </div>
-              </div>
-            </div>
-            <div className="flex justify-end gap-3 mt-6">
-              <button onClick={() => setShowTemplateEditor(false)} className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
-              <button onClick={() => setShowTemplateEditor(false)} className="px-4 py-2 text-sm bg-blue-700 text-white rounded-lg hover:bg-blue-800">Save Changes</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Send Test Email Modal */}
-      {showTestEmailModal && (
+      {/* Test Email Modal */}
+      {showTestModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          {/* Backdrop */}
-          <div
-            className="absolute inset-0 bg-black bg-opacity-40 backdrop-blur-sm"
-            onClick={() => !testEmailSending && setShowTestEmailModal(false)}
-          />
-
-          {/* Modal */}
-          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden transform transition-all">
-            {/* Header */}
+          <div className="absolute inset-0 bg-black bg-opacity-40 backdrop-blur-sm" onClick={() => !testSending && setShowTestModal(false)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
             <div className="bg-gradient-to-r from-blue-700 to-blue-500 px-6 py-5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -660,84 +498,37 @@ export default function FlowEditorPage() {
                   </div>
                   <div>
                     <h2 className="text-white font-semibold text-lg">Send Test Email</h2>
-                    <p className="text-blue-200 text-xs mt-0.5">Preview how your email looks in inbox</p>
+                    <p className="text-blue-200 text-xs">Preview in your inbox</p>
                   </div>
                 </div>
-                <button
-                  onClick={() => setShowTestEmailModal(false)}
-                  disabled={testEmailSending}
-                  className="w-8 h-8 flex items-center justify-center text-white text-opacity-70 hover:text-opacity-100 hover:bg-white hover:bg-opacity-20 rounded-lg transition-all"
-                >
-                  &#10005;
-                </button>
+                <button onClick={() => setShowTestModal(false)} disabled={testSending}
+                  className="text-white text-opacity-70 hover:text-opacity-100 w-8 h-8 flex items-center justify-center hover:bg-white hover:bg-opacity-20 rounded-lg">&#10005;</button>
               </div>
             </div>
-
-            {/* Body */}
             <div className="px-6 py-6">
-              {!testEmailSuccess ? (
+              {!testSuccess ? (
                 <>
                   <div className="mb-5">
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Email address</label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                        </svg>
-                      </div>
-                      <input
-                        type="email"
-                        value={testEmailAddress}
-                        onChange={(e) => {
-                          setTestEmailAddress(e.target.value)
-                          setTestEmailError('')
-                        }}
-                        onKeyDown={(e) => e.key === 'Enter' && handleSubmitTestEmail()}
-                        placeholder="you@example.com"
-                        autoFocus
-                        disabled={testEmailSending}
-                        className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl text-sm transition-all outline-none ${
-                          testEmailError
-                            ? 'border-red-300 bg-red-50 focus:border-red-400'
-                            : 'border-gray-200 focus:border-blue-500 bg-gray-50 focus:bg-white'
-                        } disabled:opacity-50`}
-                      />
-                    </div>
-
-                    {testEmailError && (
-                      <div className="flex items-center gap-2 mt-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-red-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <p className="text-red-500 text-xs">{testEmailError}</p>
-                      </div>
-                    )}
-
-                    <div className="flex items-center gap-2 mt-3 bg-blue-50 rounded-lg px-3 py-2.5">
+                    <input type="email" value={testEmail} onChange={e => setTestEmail(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && handleSendTest()}
+                      placeholder="you@example.com" autoFocus disabled={testSending}
+                      className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-blue-500 outline-none disabled:opacity-50" />
+                    <div className="flex items-center gap-2 mt-2 bg-blue-50 rounded-lg px-3 py-2">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-blue-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      <p className="text-blue-600 text-xs">The email will be sent from your sender domain</p>
+                      <p className="text-blue-600 text-xs">Sending: {selectedEmail.subject}</p>
                     </div>
                   </div>
-
-                  {/* Footer buttons */}
                   <div className="flex gap-3">
-                    <button
-                      onClick={() => setShowTestEmailModal(false)}
-                      disabled={testEmailSending}
-                      className="flex-1 px-4 py-3 text-sm font-medium border-2 border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all disabled:opacity-50"
-                    >
-                      Discard
-                    </button>
-                    <button
-                      onClick={handleSubmitTestEmail}
-                      disabled={testEmailSending || !testEmailAddress}
-                      className="flex-1 px-4 py-3 text-sm font-semibold bg-blue-700 text-white rounded-xl hover:bg-blue-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-blue-200"
-                    >
-                      {testEmailSending ? (
+                    <button onClick={() => setShowTestModal(false)} disabled={testSending}
+                      className="flex-1 px-4 py-3 text-sm border-2 border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50 disabled:opacity-50">Discard</button>
+                    <button onClick={handleSendTest} disabled={testSending || !testEmail}
+                      className="flex-1 px-4 py-3 text-sm font-semibold bg-blue-700 text-white rounded-xl hover:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-blue-200">
+                      {testSending ? (
                         <>
-                          <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                           </svg>
@@ -755,7 +546,6 @@ export default function FlowEditorPage() {
                   </div>
                 </>
               ) : (
-                /* Success State */
                 <div className="text-center py-4">
                   <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -763,27 +553,13 @@ export default function FlowEditorPage() {
                     </svg>
                   </div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">Test Email Sent!</h3>
-                  <p className="text-gray-500 text-sm mb-1">We sent a test email to:</p>
-                  <p className="text-blue-700 font-semibold text-sm mb-5">{testEmailAddress}</p>
-                  <p className="text-gray-400 text-xs mb-6">
-                    Check your inbox — it may take a minute to arrive. Don&apos;t forget to check your spam folder.
-                  </p>
+                  <p className="text-gray-500 text-sm mb-1">Sent to: <strong className="text-blue-700">{testEmail}</strong></p>
+                  <p className="text-gray-400 text-xs mb-6">Check your inbox (and spam folder)</p>
                   <div className="flex gap-3">
-                    <button
-                      onClick={() => {
-                        setTestEmailSuccess(false)
-                        setTestEmailAddress('')
-                      }}
-                      className="flex-1 px-4 py-3 text-sm font-medium border-2 border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50 transition-all"
-                    >
-                      Send Another
-                    </button>
-                    <button
-                      onClick={() => setShowTestEmailModal(false)}
-                      className="flex-1 px-4 py-3 text-sm font-semibold bg-blue-700 text-white rounded-xl hover:bg-blue-800 transition-all shadow-lg shadow-blue-200"
-                    >
-                      Done
-                    </button>
+                    <button onClick={() => { setTestSuccess(false); setTestEmail('') }}
+                      className="flex-1 px-4 py-3 text-sm border-2 border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50">Send Another</button>
+                    <button onClick={() => setShowTestModal(false)}
+                      className="flex-1 px-4 py-3 text-sm font-semibold bg-blue-700 text-white rounded-xl hover:bg-blue-800 shadow-lg shadow-blue-200">Done</button>
                   </div>
                 </div>
               )}
