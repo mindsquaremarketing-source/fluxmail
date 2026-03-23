@@ -76,27 +76,30 @@ function ctaButton(text: string, url: string, primaryColor: string) {
 function productsSection(products: any[], primaryColor: string, website: string) {
   if (!products || products.length === 0) return ''
   const { textOnPrimary, lightPrimary } = getColors(primaryColor)
+
+  const cards = products.slice(0, 2).map(p => {
+    const imageUrl = p.images?.[0]?.src || ''
+    const price = p.variants?.[0]?.price || '0.00'
+    return `<td width="48%" style="vertical-align:top;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="border-radius:12px;overflow:hidden;border:1px solid #F3F4F6;">
+        <tr><td style="padding:0;line-height:0;background:${lightPrimary};">
+          ${imageUrl
+            ? `<a href="${website}"><img src="${imageUrl}" alt="${p.title}" width="250" style="width:100%;max-width:250px;height:auto;display:block;border-radius:12px 12px 0 0;"></a>`
+            : `<div style="padding:40px 20px;text-align:center;font-size:48px;background:${lightPrimary};">&#128717;</div>`
+          }
+        </td></tr>
+        <tr><td style="padding:14px 12px;text-align:center;background:#ffffff;">
+          <p style="color:#111827;font-weight:700;font-size:13px;margin:0 0 4px;line-height:1.4;">${p.title}</p>
+          <p style="color:${primaryColor};font-weight:800;font-size:15px;margin:0 0 10px;">$${price}</p>
+          <a href="${website}" style="display:inline-block;background:${primaryColor};color:${textOnPrimary};padding:8px 20px;border-radius:20px;text-decoration:none;font-size:12px;font-weight:700;">Buy Now</a>
+        </td></tr>
+      </table>
+    </td>`
+  }).join('<td width="4%" style="min-width:8px;"></td>')
+
   return `<tr><td style="padding:0 40px 32px;">
-    <h3 style="color:#111827;font-size:16px;font-weight:700;margin:0 0 16px;text-align:center;padding-top:8px;">Featured Products</h3>
-    <table width="100%" cellpadding="0" cellspacing="0"><tr>
-    ${products.slice(0, 2).map(p => `
-      <td width="48%" style="vertical-align:top;">
-        <table width="100%" cellpadding="0" cellspacing="0" style="border-radius:16px;overflow:hidden;border:1px solid #F3F4F6;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
-          <tr><td style="padding:0;line-height:0;">
-            ${p.images?.[0]?.src
-              ? `<img src="${p.images[0].src}" alt="${p.title}" width="260" height="200" style="width:100%;height:200px;object-fit:cover;object-position:center;display:block;border-radius:16px 16px 0 0;">`
-              : `<div style="width:100%;height:200px;background:${lightPrimary};text-align:center;line-height:200px;font-size:40px;border-radius:16px 16px 0 0;">&#128717;</div>`
-            }
-          </td></tr>
-          <tr><td style="padding:14px;text-align:center;background:#fff;border-radius:0 0 16px 16px;">
-            <p style="color:#111827;font-weight:700;font-size:13px;margin:0 0 6px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.title}</p>
-            <p style="color:${primaryColor};font-weight:800;font-size:16px;margin:0 0 12px;">$${p.variants?.[0]?.price || '0.00'}</p>
-            <a href="${website}" style="display:inline-block;background:${primaryColor};color:${textOnPrimary};padding:8px 24px;border-radius:20px;text-decoration:none;font-size:12px;font-weight:700;">Buy Now</a>
-          </td></tr>
-        </table>
-      </td>
-    `).join('<td width="4%"></td>')}
-    </tr></table>
+    <p style="color:#111827;font-size:16px;font-weight:700;margin:0 0 16px;text-align:center;">Featured Products</p>
+    <table width="100%" cellpadding="0" cellspacing="0"><tr>${cards}</tr></table>
   </td></tr>`
 }
 
