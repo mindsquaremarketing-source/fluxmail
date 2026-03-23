@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
 interface FlowEmail {
@@ -271,10 +271,16 @@ const emailDelays: Record<string, string> = {
   'popup-2': 'On exit intent',
 }
 
+function generateEmailHtml(email: FlowEmail): string {
+  const discountSection = email.ctaCode ? `<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;"><tr><td style="background:#EFF6FF;border:2px dashed ${email.heroColor};border-radius:16px;padding:28px;text-align:center;"><p style="color:${email.heroColor};font-size:13px;font-weight:700;margin:0 0 8px;text-transform:uppercase;letter-spacing:2px;">Your Exclusive Offer</p><p style="color:#111827;font-size:36px;font-weight:900;margin:0 0 4px;letter-spacing:4px;">${email.ctaCode}</p><p style="color:#6B7280;font-size:14px;margin:0;">Use this code at checkout</p></td></tr></table>` : ''
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:20px 0;"><tr><td align="center"><table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);"><tr><td style="background:${email.heroColor};padding:32px 40px;text-align:center;"><h1 style="color:#fff;margin:0;font-size:28px;font-weight:900;letter-spacing:-0.5px;">Fluxmail</h1><p style="color:rgba(255,255,255,0.8);margin:8px 0 0;font-size:14px;">${email.from}</p></td></tr><tr><td style="padding:48px 48px 32px;text-align:center;"><h2 style="color:#111827;font-size:32px;font-weight:900;margin:0 0 16px;line-height:1.2;">${email.heading}</h2><p style="color:#6B7280;font-size:16px;line-height:1.7;margin:0 0 32px;">${email.body}</p>${discountSection}<div style="margin-top:8px;"><a href="#" style="display:inline-block;background:${email.heroColor};color:#fff;padding:18px 56px;border-radius:50px;text-decoration:none;font-weight:700;font-size:16px;letter-spacing:0.5px;box-shadow:0 8px 24px rgba(0,0,0,0.15);">${email.ctaCode ? 'Shop Now' : email.cta}</a></div></td></tr><tr><td style="background:#F9FAFB;padding:32px 48px;"><table width="100%" cellpadding="0" cellspacing="0"><tr><td width="33%" style="text-align:center;padding:0 12px;"><div style="font-size:28px;margin-bottom:8px;">&#128666;</div><p style="color:#111827;font-weight:700;font-size:13px;margin:0 0 4px;">Free Shipping</p><p style="color:#9CA3AF;font-size:12px;margin:0;">Orders over $50</p></td><td width="33%" style="text-align:center;padding:0 12px;border-left:1px solid #E5E7EB;border-right:1px solid #E5E7EB;"><div style="font-size:28px;margin-bottom:8px;">&#8617;&#65039;</div><p style="color:#111827;font-weight:700;font-size:13px;margin:0 0 4px;">Easy Returns</p><p style="color:#9CA3AF;font-size:12px;margin:0;">30-day policy</p></td><td width="33%" style="text-align:center;padding:0 12px;"><div style="font-size:28px;margin-bottom:8px;">&#11088;</div><p style="color:#111827;font-weight:700;font-size:13px;margin:0 0 4px;">Top Rated</p><p style="color:#9CA3AF;font-size:12px;margin:0;">Loved by customers</p></td></tr></table></td></tr><tr><td style="background:#111827;padding:32px 48px;text-align:center;"><p style="color:#fff;font-weight:700;font-size:16px;margin:0 0 8px;">Fluxmail</p><p style="color:#9CA3AF;font-size:12px;line-height:1.6;margin:0 0 16px;">You are receiving this because you signed up for updates.<br>We respect your privacy.</p><a href="#" style="color:#9CA3AF;font-size:12px;text-decoration:underline;">Unsubscribe</a></td></tr></table></td></tr></table></body></html>`
+}
+
 export default function FlowEditorPage() {
   const router = useRouter()
   const [expandedFlow, setExpandedFlow] = useState<string>('Welcome Flow')
   const [selectedEmail, setSelectedEmail] = useState<FlowEmail>(flows[0].emails[0])
+  const [selectedEmailHtml, setSelectedEmailHtml] = useState<string>('')
   const [onlyNewContacts, setOnlyNewContacts] = useState(true)
   const [showEditMenu, setShowEditMenu] = useState(false)
   const [showSubjectEditor, setShowSubjectEditor] = useState(false)
@@ -285,12 +291,18 @@ export default function FlowEditorPage() {
   const [testEmailSuccess, setTestEmailSuccess] = useState(false)
   const [testEmailError, setTestEmailError] = useState('')
 
+  // Set initial email HTML on mount
+  useEffect(() => {
+    setSelectedEmailHtml(generateEmailHtml(flows[0].emails[0]))
+  }, [])
+
   const toggleFlow = (flowName: string) => {
     setExpandedFlow(expandedFlow === flowName ? '' : flowName)
   }
 
   const selectEmail = (email: FlowEmail) => {
     setSelectedEmail(email)
+    setSelectedEmailHtml(generateEmailHtml(email))
   }
 
   const currentTrigger = triggerInfo[expandedFlow] || triggerInfo['Welcome Flow']
@@ -534,50 +546,14 @@ export default function FlowEditorPage() {
           <div className="px-5 py-3 border-b border-gray-200 bg-gray-50">
             <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Email Preview</span>
           </div>
-          <div className="p-8 flex justify-center">
-            <div className="w-full max-w-[500px] border border-gray-200 rounded-lg overflow-hidden shadow-sm">
-              {/* Logo Area */}
-              <div className="bg-white px-8 py-6 text-center border-b border-gray-100">
-                <span className="text-xl font-bold text-blue-700">Fluxmail</span>
-              </div>
-
-              {/* Hero Section */}
-              <div
-                className="px-8 py-12 text-center"
-                style={{ backgroundColor: selectedEmail.heroColor }}
-              >
-                <h1 className="text-2xl font-bold text-white mb-3">{selectedEmail.heading}</h1>
-                <p className="text-white/90 text-sm leading-relaxed max-w-sm mx-auto">
-                  {selectedEmail.body}
-                </p>
-              </div>
-
-              {/* CTA Section */}
-              <div className="bg-white px-8 py-8 text-center">
-                <p className="text-gray-700 text-sm font-medium mb-4">{selectedEmail.cta}</p>
-                {selectedEmail.ctaCode && (
-                  <div className="mb-6">
-                    <div className="inline-block border-2 border-dashed border-blue-300 rounded-lg px-6 py-3 bg-blue-50">
-                      <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Use Code</p>
-                      <p className="text-lg font-bold text-blue-700 tracking-widest">{selectedEmail.ctaCode}</p>
-                    </div>
-                  </div>
-                )}
-                <button
-                  className="inline-block px-8 py-3 rounded-lg text-white text-sm font-medium"
-                  style={{ backgroundColor: selectedEmail.heroColor }}
-                >
-                  {selectedEmail.ctaCode ? 'Shop Now' : selectedEmail.cta}
-                </button>
-              </div>
-
-              {/* Footer */}
-              <div className="bg-gray-50 px-8 py-4 text-center border-t border-gray-100">
-                <p className="text-[11px] text-gray-400">
-                  Sent via Fluxmail · Unsubscribe
-                </p>
-              </div>
-            </div>
+          <div className="p-4 bg-gray-100">
+            <iframe
+              key={selectedEmail.id}
+              srcDoc={selectedEmailHtml}
+              className="w-full bg-white rounded-xl shadow-sm"
+              style={{ height: '600px', border: 'none' }}
+              title="Email Preview"
+            />
           </div>
         </div>
       </div>
