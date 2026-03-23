@@ -26,7 +26,7 @@ const generators: Record<string, (d: any) => string> = {
 
 export async function POST(req: NextRequest) {
   try {
-    const { templateKey, storeData, products } = await req.json()
+    const { templateKey, storeData, products, generateAll } = await req.json()
 
     const data = {
       storeName: storeData?.companyName || storeData?.storeName || storeData?.senderName || 'Our Store',
@@ -36,9 +36,18 @@ export async function POST(req: NextRequest) {
       products: products || [],
     }
 
+    // Generate ALL templates at once
+    if (generateAll) {
+      const all: Record<string, string> = {}
+      for (const [key, gen] of Object.entries(generators)) {
+        all[key] = gen(data)
+      }
+      return NextResponse.json({ all, success: true })
+    }
+
+    // Single template
     const generator = generators[templateKey] || generateWelcome1
     const html = generator(data)
-
     return NextResponse.json({ html, success: true })
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 })

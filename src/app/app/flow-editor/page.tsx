@@ -70,149 +70,104 @@ export default function FlowEditor() {
   const [storeProducts, setStoreProducts] = useState<any[]>([])
   const [dynamicTemplates, setDynamicTemplates] = useState<Record<string, string>>({})
   const [loadingTemplate, setLoadingTemplate] = useState(false)
-  const [logoLoaded, setLogoLoaded] = useState(false)
 
-  // Pre-generate all templates in background
-  const preGenerateAllTemplates = async (store: any, products: any[]) => {
-    const allKeys = [
-      'welcome-1', 'welcome-2', 'welcome-3',
-      'browse-1', 'browse-2',
-      'checkout-1', 'checkout-2', 'checkout-3',
-      'thankyou-1', 'thankyou-2',
-      'winback-1', 'winback-2', 'winback-3'
-    ]
-    for (const key of allKeys) {
-      const cacheKey = `template_${key}_${store.id}`
-      try {
-        const existing = localStorage.getItem(cacheKey)
-        if (existing) {
-          setDynamicTemplates(prev => ({ ...prev, [key]: existing }))
-          continue
-        }
-      } catch {}
+  useEffect(() => {
+    const cacheKey = 'fluxmail_templates_v1'
+
+    const refreshTemplates = async (store: any, products: any[]) => {
       try {
         const res = await fetch('/api/templates/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ templateKey: key, storeData: store, products: products.slice(0, 2) })
+          body: JSON.stringify({ generateAll: true, storeData: store || {}, products: products.slice(0, 2) })
         })
         const data = await res.json()
-        if (data.html) {
-          try { localStorage.setItem(cacheKey, data.html) } catch {}
-          setDynamicTemplates(prev => ({ ...prev, [key]: data.html }))
+        if (data.all) {
+          setDynamicTemplates(data.all)
+          try { localStorage.setItem(cacheKey, JSON.stringify(data.all)) } catch {}
         }
-        await new Promise(r => setTimeout(r, 150))
       } catch {}
     }
-  }
 
-  // Load store data, preload logo, and generate templates on mount
-  useEffect(() => {
     const init = async () => {
       try {
+        // Check localStorage cache first
+        let cachedTemplates: Record<string, string> | null = null
+        try {
+          const cached = localStorage.getItem(cacheKey)
+          if (cached) cachedTemplates = JSON.parse(cached)
+        } catch {}
+
+        // Fetch store data
         const [settingsRes, productsRes] = await Promise.all([
           fetch('/api/settings'),
           fetch('/api/products'),
         ])
         const settingsData = await settingsRes.json()
         const productsData = await productsRes.json()
+        const store = settingsData.store
+        const products = productsData.products || []
 
-        setStoreData(settingsData.store)
-        setStoreProducts(productsData.products || [])
-
-        // Set first email as selected
+        setStoreData(store)
+        setStoreProducts(products)
         setSelectedEmail(flows[0]?.emails[0] ?? null)
 
-        // Preload logo image before generating templates
-        if (settingsData.store?.logoUrl) {
-          await new Promise<void>((resolve) => {
-            const img = new Image()
-            img.onload = () => resolve()
-            img.onerror = () => resolve()
-            img.src = settingsData.store.logoUrl
-          })
-        }
-        setLogoLoaded(true)
-
-        // Generate first template after logo is preloaded
-        if (settingsData.store) {
+        if (cachedTemplates && cachedTemplates['welcome-1']) {
+          // Use cache instantly — no spinner
+          setDynamicTemplates(cachedTemplates)
+          setSelectedHtml(cachedTemplates['welcome-1'])
+          // Refresh in background
+          refreshTemplates(store, products)
+        } else {
+          // Generate all in one API call
+          setLoadingTemplate(true)
           const res = await fetch('/api/templates/generate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              templateKey: 'welcome-1',
-              storeData: settingsData.store,
-              products: productsData.products?.slice(0, 2) || []
-            })
+            body: JSON.stringify({ generateAll: true, storeData: store || {}, products: products.slice(0, 2) })
           })
           const data = await res.json()
-          if (data.html) {
-            setDynamicTemplates(prev => ({ ...prev, 'welcome-1': data.html }))
-            try { localStorage.setItem(`template_welcome-1_${settingsData.store.id}`, data.html) } catch {}
-            setSelectedHtml(data.html)
+          if (data.all) {
+            setDynamicTemplates(data.all)
+            setSelectedHtml(data.all['welcome-1'] || '')
+            try { localStorage.setItem(cacheKey, JSON.stringify(data.all)) } catch {}
           }
-
-          // Pre-generate all other templates in background
-          preGenerateAllTemplates(settingsData.store, productsData.products || [])
+          setLoadingTemplate(false)
         }
       } catch (e) {
-        console.error('Failed to load store data:', e)
-        setLogoLoaded(true)
+        console.error('Init failed:', e)
+        setLoadingTemplate(false)
       }
     }
     init()
   }, [])
 
-  const handleEmailClick = async (email: FlowEmail) => {
+  const handleEmailClick = (email: FlowEmail) => {
     setSelectedEmail(email)
 
-    // Check memory cache first
-    const memoryCached = dynamicTemplates[email.templateKey]
-    if (memoryCached) {
-      setSelectedHtml(memoryCached)
+    // Instant from memory
+    const cached = dynamicTemplates[email.templateKey]
+    if (cached) {
+      setSelectedHtml(cached)
       return
     }
 
-    // Check localStorage cache
-    if (storeData?.id) {
-      const cacheKey = `template_${email.templateKey}_${storeData.id}`
-      try {
-        const lsCached = localStorage.getItem(cacheKey)
-        if (lsCached) {
-          setSelectedHtml(lsCached)
-          setDynamicTemplates(prev => ({ ...prev, [email.templateKey]: lsCached }))
-          return
-        }
-      } catch {}
-    }
-
-    // Generate dynamic template via API
-    if (storeData) {
-      setLoadingTemplate(true)
-      try {
-        const res = await fetch('/api/templates/generate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            templateKey: email.templateKey,
-            storeData,
-            products: storeProducts.slice(0, 2)
-          })
-        })
-        const data = await res.json()
+    // Fallback: fetch single template
+    setLoadingTemplate(true)
+    fetch('/api/templates/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ templateKey: email.templateKey, storeData: storeData || {}, products: storeProducts.slice(0, 2) })
+    })
+      .then(r => r.json())
+      .then(data => {
         if (data.html) {
-          setDynamicTemplates(prev => ({ ...prev, [email.templateKey]: data.html }))
-          try { localStorage.setItem(`template_${email.templateKey}_${storeData.id}`, data.html) } catch {}
           setSelectedHtml(data.html)
-          setLoadingTemplate(false)
-          return
+          setDynamicTemplates(prev => ({ ...prev, [email.templateKey]: data.html }))
         }
-      } catch {}
-      setLoadingTemplate(false)
-    }
-
-    // No static fallback - show empty state
-    setSelectedHtml('')
+      })
+      .catch(() => setSelectedHtml(''))
+      .finally(() => setLoadingTemplate(false))
   }
 
   const handleSendTest = async () => {
@@ -380,7 +335,7 @@ export default function FlowEditor() {
         </div>
 
         <div className="flex-1 overflow-auto bg-gray-100 p-6">
-          {!selectedEmail || !selectedHtml || !logoLoaded ? (
+          {!selectedEmail || !selectedHtml ? (
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
                 <svg className="animate-spin h-10 w-10 text-blue-600 mx-auto mb-4" fill="none" viewBox="0 0 24 24">
