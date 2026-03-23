@@ -14,6 +14,8 @@ export async function POST(
       return NextResponse.json({ error: 'Campaign not found' }, { status: 404 })
     }
 
+    console.log('Campaign found:', campaign.id, campaign.status)
+
     // Update to sending first
     await prisma.campaign.update({
       where: { id: params.id },
@@ -23,6 +25,9 @@ export async function POST(
     const contacts = await prisma.contact.findMany({
       where: { storeId: campaign.storeId, status: { in: ['subscribed', 'not_subscribed'] } }
     })
+
+    console.log('Contacts found:', contacts.length)
+    console.log('Sending to contacts:', contacts.map(c => c.email))
 
     let sent = 0
     for (const contact of contacts) {
@@ -49,6 +54,8 @@ export async function POST(
         emailsSent: sent,
       }
     })
+
+    console.log('Campaign updated to sent, emails:', sent)
 
     return NextResponse.json({ success: true, sent })
   } catch (error: any) {
