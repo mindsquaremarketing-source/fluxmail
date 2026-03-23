@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
     if (!store) return NextResponse.json({ products: [] })
 
     const response = await fetch(
-      `https://${store.shopDomain}/admin/api/2024-01/products.json?limit=50&fields=id,title,images`,
+      `https://${store.shopDomain}/admin/api/2024-01/products.json?limit=50&fields=id,title,images,variants`,
       {
         headers: {
           'X-Shopify-Access-Token': store.accessToken,

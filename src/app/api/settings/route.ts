@@ -26,10 +26,16 @@ export async function GET(req: NextRequest) {
       where: { storeId: store.id },
     })
 
+    const shopName = store.shopDomain.replace('.myshopify.com', '')
+
     return NextResponse.json({
       store: {
         id: store.id,
         shopDomain: store.shopDomain,
+        storeName: shopName.charAt(0).toUpperCase() + shopName.slice(1),
+        primaryColor: '#1E40AF',
+        logoUrl: '',
+        website: `https://${store.shopDomain}`,
         createdAt: store.createdAt,
       },
       contactCount,

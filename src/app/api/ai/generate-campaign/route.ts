@@ -16,6 +16,31 @@ export async function POST(req: NextRequest) {
     const primaryColor = '#1E40AF'
     const storeName = store?.shopDomain?.replace('.myshopify.com', '') || 'Our Store'
 
+    // Fetch real products from Shopify
+    let realProductName = productName || 'Featured Product'
+    let realProductImage = productImage || ''
+    let realProductPrice = '0.00'
+
+    if (store) {
+      try {
+        const productsRes = await fetch(
+          `https://${store.shopDomain}/admin/api/2024-01/products.json?limit=10&fields=id,title,images,variants`,
+          { headers: { 'X-Shopify-Access-Token': store.accessToken } }
+        )
+        const productsData = await productsRes.json()
+        const shopifyProducts = productsData.products || []
+
+        if (shopifyProducts.length > 0) {
+          const featured = shopifyProducts[0]
+          if (!productName) realProductName = featured.title
+          if (!productImage) realProductImage = featured.images?.[0]?.src || ''
+          realProductPrice = featured.variants?.[0]?.price || '0.00'
+        }
+      } catch (e) {
+        console.error('Failed to fetch products for AI:', e)
+      }
+    }
+
     // Use smaller, faster model with less tokens
     const message = await client.messages.create({
       model: 'claude-haiku-4-5-20251001',
@@ -28,8 +53,9 @@ Create a stunning, conversion-focused HTML email.
 
 Store: ${storeName}
 Brand color: ${primaryColor}
-Product: ${productName || 'Featured Product'}
-Image: ${productImage || `https://source.unsplash.com/600x400/?${encodeURIComponent(productName || 'shopping,product')}`}
+Product: ${realProductName}
+Product price: $${realProductPrice}
+Image: ${realProductImage || `https://source.unsplash.com/600x400/?${encodeURIComponent(realProductName || 'shopping,product')}`}
 Brief: ${prompt}
 Discount: ${discountCode ? `Code ${discountCode} for ${discountValue}% off` : 'No discount'}
 

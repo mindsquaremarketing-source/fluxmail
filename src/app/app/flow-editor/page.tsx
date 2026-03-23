@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
 const emailTemplates: Record<string, string> = {
@@ -273,10 +273,69 @@ export default function FlowEditor() {
   const [testEmail, setTestEmail] = useState('')
   const [testSending, setTestSending] = useState(false)
   const [testSuccess, setTestSuccess] = useState(false)
+  const [storeData, setStoreData] = useState<{ storeName: string; primaryColor: string; logoUrl: string; website: string; products: any[] } | null>(null)
 
-  const handleEmailClick = (email: any) => {
+  // Fetch real store data and products on mount
+  useEffect(() => {
+    const loadStoreData = async () => {
+      try {
+        const [settingsRes, productsRes] = await Promise.all([
+          fetch('/api/settings'),
+          fetch('/api/products'),
+        ])
+        const settingsData = await settingsRes.json()
+        const productsData = await productsRes.json()
+
+        const data = {
+          storeName: settingsData.store?.storeName || 'Your Store',
+          primaryColor: settingsData.store?.primaryColor || '#1E40AF',
+          logoUrl: settingsData.store?.logoUrl || '',
+          website: settingsData.store?.website || '#',
+          products: productsData.products || [],
+        }
+        setStoreData(data)
+
+        // Regenerate current template with real data
+        const dynamicHtml = generateDynamicTemplate(defaultEmail.templateKey, data)
+        if (dynamicHtml) setSelectedHtml(dynamicHtml)
+      } catch (e) {
+        console.error('Failed to load store data:', e)
+      }
+    }
+    loadStoreData()
+  }, [])
+
+  const generateDynamicTemplate = (templateKey: string, data: { storeName: string; primaryColor: string; logoUrl: string; website: string; products: any[] }): string | null => {
+    const { storeName, primaryColor, products } = data
+    const productRows = products.slice(0, 2).map(p =>
+      `<td width="48%" style="background:#F9FAFB;border-radius:12px;overflow:hidden;text-align:center;">
+        ${p.images?.[0]?.src ? `<img src="${p.images[0].src}" style="width:100%;height:140px;object-fit:cover;">` : `<div style="height:140px;background:#E5E7EB;text-align:center;line-height:140px;font-size:28px;">&#128230;</div>`}
+        <div style="padding:10px;"><p style="color:#111827;font-weight:700;font-size:12px;margin:0 0 4px;">${p.title}</p><p style="color:${primaryColor};font-weight:700;font-size:13px;margin:0;">$${p.variants?.[0]?.price || '0.00'}</p></div>
+      </td>`
+    ).join('<td width="4%"></td>')
+    const productsSection = products.length > 0 ? `<tr><td style="padding:24px 40px;"><p style="color:#111827;font-size:16px;font-weight:700;margin:0 0 12px;text-align:center;">Our Products</p><table width="100%"><tr>${productRows}</tr></table></td></tr>` : ''
+
+    const base = emailTemplates[templateKey]
+    if (!base) return null
+
+    // For welcome-1, inject products section before footer
+    if (templateKey === 'welcome-1' && productsSection) {
+      return base
+        .replace(/Our Store|Your Store/g, storeName)
+        .replace(/#1E40AF/g, primaryColor)
+        .replace(/<\/div><\/div><\/body>/, `</div>${productsSection}</div></body>`)
+    }
+
+    // For all templates, swap store name and brand color
+    return base
+      .replace(/Our Store|Your Store|Fluxmail/g, storeName)
+      .replace(/#1E40AF/g, primaryColor)
+  }
+
+  const handleEmailClick = (email: FlowEmail) => {
     setSelectedEmail(email)
-    setSelectedHtml(emailTemplates[email.templateKey] || '<p style="text-align:center;padding:40px;color:#999">No template available</p>')
+    const dynamicHtml = storeData ? generateDynamicTemplate(email.templateKey, storeData) : null
+    setSelectedHtml(dynamicHtml || emailTemplates[email.templateKey] || '<p style="text-align:center;padding:40px;color:#999">No template available</p>')
   }
 
   const handleSendTest = async () => {
