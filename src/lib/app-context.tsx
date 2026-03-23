@@ -9,6 +9,7 @@ interface AppState {
   stats: any
   loaded: boolean
   lastFetch: number
+  lastContactSync: number
 }
 
 interface AppContextType {
@@ -30,6 +31,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     stats: null,
     loaded: false,
     lastFetch: 0,
+    lastContactSync: 0,
   })
   const fetchedRef = useRef(false)
 
@@ -58,9 +60,35 @@ export function AppProvider({ children }: { children: ReactNode }) {
         productsRes.json(),
       ])
 
-      const campaigns = campaignsData.campaigns || []
-      const contacts = contactsData.contacts || []
-      const store = settingsData.store
+      let campaigns = campaignsData.campaigns || []
+      let contacts = contactsData.contacts || []
+      let store = settingsData.store
+
+      // Auto sync branding if companyName is empty
+      if (store && !store.companyName) {
+        try {
+          await fetch('/api/sync/branding', { method: 'POST' })
+          const refreshed = await fetch('/api/settings')
+          const refreshedData = await refreshed.json()
+          if (refreshedData.store) store = refreshedData.store
+        } catch {}
+      }
+
+      // Auto sync contacts if none exist
+      let contactSyncTime = 0
+      if (contacts.length === 0 && store?.shopDomain) {
+        try {
+          await fetch('/api/sync/contacts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ shop: store.shopDomain })
+          })
+          const refreshed = await fetch('/api/contacts')
+          const refreshedData = await refreshed.json()
+          contacts = refreshedData.contacts || []
+          contactSyncTime = now
+        } catch {}
+      }
 
       const sentCampaigns = campaigns.filter((c: any) => c.status === 'sent')
       const totalEmailsSent = sentCampaigns.reduce((sum: number, c: any) => sum + (c.emailsSent || 0), 0)
@@ -81,6 +109,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         },
         loaded: true,
         lastFetch: now,
+        lastContactSync: contactSyncTime || now,
       })
     } catch (e) {
       console.error('AppProvider fetch failed:', e)
@@ -96,7 +125,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const refreshContacts = async () => {
     const res = await fetch('/api/contacts')
     const data = await res.json()
-    setState(prev => ({ ...prev, contacts: data.contacts || [] }))
+    setState(prev => ({ ...prev, contacts: data.contacts || [], lastContactSync: Date.now() }))
   }
 
   return (
