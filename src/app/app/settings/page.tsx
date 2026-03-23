@@ -1,7 +1,9 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
+import { useApp } from '@/lib/app-context'
 
 export default function SettingsPage() {
+  const { state: appState } = useApp()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saveMsg, setSaveMsg] = useState('')
@@ -36,47 +38,58 @@ export default function SettingsPage() {
   const [senderDomain, setSenderDomain] = useState('')
   const [senderEmail, setSenderEmail] = useState('')
 
+  const populateFromStore = (s: any) => {
+    if (!s) return
+    setFirstName(s.firstName || '')
+    setLastName(s.lastName || '')
+    setEmail(s.email || '')
+    setPhone(s.phone || '')
+    setLogoUrl(s.logoUrl || '')
+    setLanguage(s.language || 'English')
+    setFontFamily(s.fontFamily || 'Arial')
+    setButtonShape(s.buttonShape || 'rounded')
+    setPrimaryColor(s.primaryColor || '#1E40AF')
+    setPrimaryText(s.primaryText || '#FFFFFF')
+    setSecondaryColor(s.secondaryColor || '#FFFFFF')
+    setSecondaryText(s.secondaryText || '#000000')
+    setBgColor(s.bgColor || '#FFFFFF')
+    setBgText(s.bgText || '#1F2937')
+    setCompanyName(s.companyName || '')
+    setWebsite(s.website || '')
+    setCountry(s.country || 'US')
+    setStateVal(s.state || '')
+    setCity(s.city || '')
+    setZip(s.zip || '')
+    setAddress(s.address || '')
+    setSenderName(s.senderName || '')
+    setReplyToEmail(s.replyToEmail || '')
+    setRootDomain(s.rootDomain || s.shopDomain || '')
+    setSenderDomain(s.senderDomain || '')
+    setSenderEmail(s.senderEmail || '')
+  }
+
+  // Use global context if available for instant load, fall back to fetch
   useEffect(() => {
+    if (appState.loaded && appState.store) {
+      populateFromStore(appState.store)
+      setLoading(false)
+      if (!appState.store.companyName && !appState.store.logoUrl) {
+        setTimeout(() => syncFromShopify(), 1000)
+      }
+      return
+    }
+    // Fallback fetch if context not ready yet
     fetch('/api/settings')
       .then(r => r.json())
       .then(data => {
-        const s = data.store
-        if (s) {
-          setFirstName(s.firstName || '')
-          setLastName(s.lastName || '')
-          setEmail(s.email || '')
-          setPhone(s.phone || '')
-          setLogoUrl(s.logoUrl || '')
-          setLanguage(s.language || 'English')
-          setFontFamily(s.fontFamily || 'Arial')
-          setButtonShape(s.buttonShape || 'rounded')
-          setPrimaryColor(s.primaryColor || '#1E40AF')
-          setPrimaryText(s.primaryText || '#FFFFFF')
-          setSecondaryColor(s.secondaryColor || '#FFFFFF')
-          setSecondaryText(s.secondaryText || '#000000')
-          setBgColor(s.bgColor || '#FFFFFF')
-          setBgText(s.bgText || '#1F2937')
-          setCompanyName(s.companyName || '')
-          setWebsite(s.website || '')
-          setCountry(s.country || 'US')
-          setStateVal(s.state || '')
-          setCity(s.city || '')
-          setZip(s.zip || '')
-          setAddress(s.address || '')
-          setSenderName(s.senderName || '')
-          setReplyToEmail(s.replyToEmail || '')
-          setRootDomain(s.rootDomain || s.shopDomain || '')
-          setSenderDomain(s.senderDomain || '')
-          setSenderEmail(s.senderEmail || '')
-          // Auto sync from Shopify if no company name set
-          if (!s.companyName && !s.logoUrl) {
-            setTimeout(() => syncFromShopify(), 1000)
-          }
-        }
+        populateFromStore(data.store)
         setLoading(false)
+        if (data.store && !data.store.companyName && !data.store.logoUrl) {
+          setTimeout(() => syncFromShopify(), 1000)
+        }
       })
       .catch(() => setLoading(false))
-  }, [])
+  }, [appState.loaded])
 
   const save = async (data: any) => {
     setSaving(true)
