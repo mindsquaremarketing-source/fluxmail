@@ -32,6 +32,8 @@ export default function ContactsPage() {
   const [search, setSearch] = useState('')
   const [showBanner, setShowBanner] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [syncing, setSyncing] = useState(false)
+  const [syncResult, setSyncResult] = useState<string | null>(null)
 
   const fetchContacts = useCallback(async () => {
     setLoading(true)
@@ -95,6 +97,39 @@ export default function ContactsPage() {
     return name || '—'
   }
 
+  const handleSync = async () => {
+    setSyncing(true)
+    setSyncResult(null)
+    try {
+      // First get the store domain
+      const storeRes = await fetch('/api/store')
+      const storeData = await storeRes.json()
+      const shopDomain = storeData.store?.shopDomain
+      if (!shopDomain) {
+        setSyncResult('Error: No store found. Please reinstall the app.')
+        setSyncing(false)
+        return
+      }
+
+      const res = await fetch('/api/sync/contacts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ shop: shopDomain }),
+      })
+      const result = await res.json()
+      if (res.ok) {
+        setSyncResult(`Synced ${result.synced || 0} contacts!`)
+        await fetchContacts()
+      } else {
+        setSyncResult(`Error: ${result.error}`)
+      }
+    } catch (err: any) {
+      setSyncResult(`Error: ${err.message}`)
+    } finally {
+      setSyncing(false)
+    }
+  }
+
   const tabs = [
     { key: 'all', label: 'All', count: data?.totalAll || 0 },
     { key: 'subscribed', label: 'Subscribed', count: data?.subscribedCount || 0 },
@@ -107,7 +142,26 @@ export default function ContactsPage() {
 
   return (
     <div className="p-8 bg-gray-50 min-h-screen">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Contacts</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Contacts</h1>
+        <div className="flex items-center gap-3">
+          {syncResult && (
+            <span className={`text-sm ${syncResult.startsWith('Error') ? 'text-red-600' : 'text-green-600'}`}>
+              {syncResult}
+            </span>
+          )}
+          <button
+            onClick={handleSync}
+            disabled={syncing}
+            className="flex items-center gap-2 bg-gray-900 text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            {syncing ? 'Syncing...' : 'Sync Contacts'}
+          </button>
+        </div>
+      </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-3 gap-4 mb-6">

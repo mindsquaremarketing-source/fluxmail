@@ -21,6 +21,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Store not found' }, { status: 404 })
     }
 
+    console.log('Store found:', store.shopDomain)
+    console.log('Store ID:', store.id)
     console.log('Starting sync for:', shop)
     console.log('Access token exists:', !!store.accessToken)
     console.log('Access token preview:', store.accessToken?.substring(0, 10))
