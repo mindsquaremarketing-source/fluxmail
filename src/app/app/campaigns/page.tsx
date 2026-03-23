@@ -147,7 +147,7 @@ export default function CampaignsPage() {
       </div>
 
       {/* Table Card */}
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm" style={{ position: 'relative', zIndex: 1 }}>
         {/* Table header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <h2 className="font-semibold text-gray-900">All Campaigns</h2>
@@ -169,7 +169,7 @@ export default function CampaignsPage() {
 
         {/* Table */}
         <table className="w-full">
-          <thead>
+          <thead className="sticky top-0 z-10">
             <tr className="bg-gray-50 border-b border-gray-100">
               {['Campaign Name', 'Date', 'Emails Sent', 'Open Rate', 'Click Rate', 'Orders', 'Revenue', 'Status', ''].map(h => (
                 <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
@@ -212,7 +212,7 @@ export default function CampaignsPage() {
                   </div>
                 </td>
               </tr>
-            ) : filtered.map((campaign) => (
+            ) : filtered.map((campaign, rowIndex) => (
               <tr key={campaign.id} className="hover:bg-blue-50/30 transition-colors group">
                 {/* Name */}
                 <td className="px-4 py-4">
@@ -338,7 +338,7 @@ export default function CampaignsPage() {
                       </button>
 
                       {openMenuId === campaign.id && (
-                        <div className="absolute right-0 top-8 bg-white border border-gray-200 rounded-xl shadow-xl z-50 w-48 py-1 overflow-hidden">
+                        <div className={`absolute right-0 bg-white border border-gray-200 rounded-xl shadow-xl z-[999] w-48 py-1 ${rowIndex >= filtered.length - 2 ? 'bottom-8' : 'top-8'}`}>
                           <button
                             onClick={() => {
                               setOpenMenuId(null)
@@ -416,7 +416,7 @@ export default function CampaignsPage() {
 
       {/* Preview Modal */}
       {previewCampaign && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center">
           <div
             className="absolute inset-0 bg-black bg-opacity-60 backdrop-blur-sm"
             onClick={() => setPreviewCampaign(null)}
