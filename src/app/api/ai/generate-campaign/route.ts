@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic'
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { prompt, productId, discountCode, discountValue, templateName } = body
+    const { prompt, productId, discountCode, discountValue, templateName, previewOnly } = body
 
     const store = await prisma.store.findFirst({ orderBy: { createdAt: 'desc' } })
     if (!store) return NextResponse.json({ error: 'No store found' }, { status: 404 })
@@ -91,6 +91,11 @@ The HTML email must:
       htmlBody = parsed.htmlBody || ''
     } catch {
       htmlBody = text
+    }
+
+    // Preview only — return HTML without saving
+    if (previewOnly) {
+      return NextResponse.json({ success: true, html: htmlBody, subject })
     }
 
     const campaignName = templateName
