@@ -39,11 +39,15 @@ export async function POST(req: NextRequest) {
         products,
       })
 
+      const baseUrl = process.env.HOST || 'https://fluxmail-silk.vercel.app'
+      const unsubscribeUrl = `${baseUrl}/unsubscribe?email=${encodeURIComponent(email)}&store=${store.shopDomain}`
+      const finalHtml = html.replace(/\{\{UNSUBSCRIBE_URL\}\}/g, unsubscribeUrl)
+
       await resend.emails.send({
         from: `${store.senderName || store.companyName || 'Fluxmail'} <onboarding@resend.dev>`,
         to: email,
         subject: `Welcome to ${store.companyName || 'Our Store'}! Here is 10% off`,
-        html,
+        html: finalHtml,
       })
       welcomeEmailSent = true
     } catch (e: any) { welcomeEmailError = e.message }

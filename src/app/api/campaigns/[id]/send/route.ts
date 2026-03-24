@@ -68,10 +68,10 @@ export async function POST(
       try {
         logs.push(`Sending to: ${contact.email}`)
 
-        const personalizedHtml = trackedHtml.replace(
-          /href="#"/g,
-          `href="${baseUrl}/unsubscribe?email=${encodeURIComponent(contact.email)}&store=${store?.shopDomain || ''}"`
-        )
+        const unsubscribeUrl = `${baseUrl}/unsubscribe?email=${encodeURIComponent(contact.email)}&store=${store?.shopDomain || ''}`
+        const personalizedHtml = trackedHtml
+          .replace(/\{\{UNSUBSCRIBE_URL\}\}/g, unsubscribeUrl)
+          .replace(/href="#"/g, `href="${unsubscribeUrl}"`)
 
         const result = await resend.emails.send({
           from: store?.senderName

@@ -53,7 +53,7 @@ function footer(storeName: string, website: string, primaryColor: string) {
   return `<tr><td style="background:#111827;padding:28px 40px;text-align:center;border-top:3px solid ${primaryColor};">
     <p style="color:#fff;font-weight:700;font-size:15px;margin:0 0 6px;">${storeName}</p>
     <p style="color:#6B7280;font-size:12px;line-height:1.6;margin:0 0 14px;">You received this because you subscribed to our store updates.</p>
-    <a href="#" style="color:#9CA3AF;font-size:12px;text-decoration:underline;margin:0 8px;">Unsubscribe</a>
+    <a href="{{UNSUBSCRIBE_URL}}" style="color:#9CA3AF;font-size:12px;text-decoration:underline;margin:0 8px;">Unsubscribe</a>
     <span style="color:#374151;">|</span>
     <a href="${website}" style="color:#9CA3AF;font-size:12px;text-decoration:underline;margin:0 8px;">Visit Store</a>
   </td></tr>`
