@@ -1,7 +1,11 @@
 export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
-import { sendFlowEmail } from '@/lib/flow-sender'
 import { prisma } from '@/lib/db'
+import { sendFlowEmail } from '@/lib/flow-sender'
+
+export async function GET() {
+  return NextResponse.json({ status: 'ok' })
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -10,19 +14,18 @@ export async function POST(req: NextRequest) {
     const store = await prisma.store.findFirst({
       orderBy: { createdAt: 'desc' }
     })
+    if (!store) return NextResponse.json(
+      { error: 'No store' }, { status: 404 }
+    )
 
     const contact = await prisma.contact.findFirst({
       where: { email }
     })
+    if (!contact) return NextResponse.json(
+      { error: 'Contact not found' }, { status: 404 }
+    )
 
-    if (!store) {
-      return NextResponse.json({ error: 'Store not found' }, { status: 404 })
-    }
-    if (!contact) {
-      return NextResponse.json({ error: 'Contact not found - add yourself as contact first' }, { status: 404 })
-    }
-
-    const result = await sendFlowEmail({
+    await sendFlowEmail({
       storeId: store.id,
       contactId: contact.id,
       contactEmail: email,
@@ -31,12 +34,14 @@ export async function POST(req: NextRequest) {
       emailNumber: 1,
     })
 
-    return NextResponse.json({ success: true, message: `Welcome email sent to ${email}`, result })
+    return NextResponse.json({
+      success: true,
+      message: `Welcome email sent to ${email}`
+    })
   } catch (error: any) {
-    return NextResponse.json({ error: error.message, stack: error.stack }, { status: 500 })
+    return NextResponse.json(
+      { error: error.message },
+      { status: 500 }
+    )
   }
-}
-
-export async function GET() {
-  return NextResponse.json({ message: 'Test route is working!' })
 }
