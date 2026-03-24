@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { Resend } from 'resend'
+import { generateWelcome1 } from '@/lib/template-engine'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,11 +19,31 @@ export async function POST(req: NextRequest) {
     let welcomeEmailSent = false
     let welcomeEmailError = null
     try {
+      // Fetch real products
+      let products: any[] = []
+      try {
+        const res = await fetch(
+          `https://${store.shopDomain}/admin/api/2024-01/products.json?limit=2&fields=id,title,images,variants`,
+          { headers: { 'X-Shopify-Access-Token': store.accessToken } }
+        )
+        const data = await res.json()
+        products = data.products || []
+      } catch {}
+
+      // Generate beautiful template
+      const html = generateWelcome1({
+        storeName: store.companyName || store.senderName || 'Our Store',
+        logoUrl: store.logoUrl || '',
+        primaryColor: store.primaryColor || '#1E40AF',
+        website: store.website || '#',
+        products,
+      })
+
       await resend.emails.send({
-        from: 'Fluxmail <onboarding@resend.dev>',
+        from: `${store.senderName || store.companyName || 'Fluxmail'} <onboarding@resend.dev>`,
         to: email,
-        subject: 'Welcome! Here is 10% off your first order',
-        html: '<h1>Welcome!</h1><p>Thank you for joining us! Use code WELCOME10 for 10% off.</p>'
+        subject: `Welcome to ${store.companyName || 'Our Store'}! Here is 10% off`,
+        html,
       })
       welcomeEmailSent = true
     } catch (e: any) { welcomeEmailError = e.message }
