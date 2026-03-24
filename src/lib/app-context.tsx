@@ -47,10 +47,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     try {
       const [settingsRes, campaignsRes, contactsRes, productsRes] = await Promise.all([
-        fetch('/api/settings'),
-        fetch('/api/campaigns'),
-        fetch('/api/contacts'),
-        fetch('/api/products'),
+        fetch('/api/settings', { cache: 'no-store' }),
+        fetch('/api/campaigns', { cache: 'no-store' }),
+        fetch('/api/contacts', { cache: 'no-store' }),
+        fetch('/api/products', { cache: 'no-store' }),
       ])
 
       const [settingsData, campaignsData, contactsData, productsData] = await Promise.all([
@@ -60,34 +60,31 @@ export function AppProvider({ children }: { children: ReactNode }) {
         productsRes.json(),
       ])
 
-      let campaigns = campaignsData.campaigns || []
-      let contacts = contactsData.contacts || []
-      let store = settingsData.store
+      const campaigns = campaignsData.campaigns || []
+      const contacts = contactsData.contacts || []
+      const store = settingsData.store
 
-      // Auto sync branding if companyName is empty
-      if (store && !store.companyName) {
-        try {
-          await fetch('/api/sync/branding', { method: 'POST' })
-          const refreshed = await fetch('/api/settings')
-          const refreshedData = await refreshed.json()
-          if (refreshedData.store) store = refreshedData.store
-        } catch {}
-      }
-
-      // Auto sync contacts if none exist
-      let contactSyncTime = 0
-      if (contacts.length === 0 && store?.shopDomain) {
-        try {
-          await fetch('/api/sync/contacts', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ shop: store.shopDomain })
+      // Background sync — don't block initial render
+      if (store?.shopDomain) {
+        fetch('/api/sync/contacts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ shop: store.shopDomain })
+        })
+          .then(() => fetch('/api/contacts', { cache: 'no-store' }))
+          .then(r => r.json())
+          .then(data => {
+            setState(prev => ({
+              ...prev,
+              contacts: data.contacts || prev.contacts,
+              stats: {
+                ...prev.stats,
+                emailsCollected: (data.contacts || []).filter((c: any) => c.status === 'subscribed').length,
+                totalContacts: (data.contacts || []).length,
+              }
+            }))
           })
-          const refreshed = await fetch('/api/contacts')
-          const refreshedData = await refreshed.json()
-          contacts = refreshedData.contacts || []
-          contactSyncTime = now
-        } catch {}
+          .catch(() => {})
       }
 
       const sentCampaigns = campaigns.filter((c: any) => c.status === 'sent')
@@ -113,7 +110,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         },
         loaded: true,
         lastFetch: now,
-        lastContactSync: contactSyncTime || now,
+        lastContactSync: now,
       })
     } catch (e) {
       console.error('AppProvider fetch failed:', e)
