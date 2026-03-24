@@ -1,21 +1,18 @@
-export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { sendFlowEmail } from '@/lib/flow-sender'
+
+export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
   try {
     const { email, firstName, lastName } = await req.json()
 
-    if (!email || !email.includes('@')) {
-      return NextResponse.json({ error: 'Valid email required' }, { status: 400 })
-    }
-
     const store = await prisma.store.findFirst({
       orderBy: { createdAt: 'desc' }
     })
     if (!store) {
-      return NextResponse.json({ error: 'No store found' }, { status: 404 })
+      return NextResponse.json({ error: 'No store' }, { status: 404 })
     }
 
     const existing = await prisma.contact.findFirst({
@@ -27,24 +24,24 @@ export async function POST(req: NextRequest) {
         storeId_email: { storeId: store.id, email: email.toLowerCase().trim() }
       },
       update: {
-        firstName: firstName || undefined,
-        lastName: lastName || undefined,
+        firstName: firstName || '',
+        lastName: lastName || '',
         status: 'subscribed',
       },
       create: {
         storeId: store.id,
         email: email.toLowerCase().trim(),
-        firstName: firstName || null,
-        lastName: lastName || null,
+        firstName: firstName || '',
+        lastName: lastName || '',
         status: 'subscribed',
         source: 'manual',
       }
     })
 
-    // Send welcome email only if new contact
     let welcomeEmailSent = false
+    let welcomeEmailError = null
+
     if (!existing) {
-      console.log('Sending welcome email to new contact:', email)
       try {
         await sendFlowEmail({
           storeId: store.id,
@@ -55,15 +52,19 @@ export async function POST(req: NextRequest) {
           emailNumber: 1,
         })
         welcomeEmailSent = true
-        console.log('Welcome email sent to:', email)
       } catch (e: any) {
-        console.error('Welcome email failed:', e.message)
+        welcomeEmailError = e.message
       }
     }
 
-    return NextResponse.json({ success: true, contact, welcomeEmailSent })
+    return NextResponse.json({
+      success: true,
+      contact,
+      isNew: !existing,
+      welcomeEmailSent,
+      welcomeEmailError
+    })
   } catch (error: any) {
-    console.error('Add contact error:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
