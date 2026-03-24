@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 type Method = 'ai' | 'template' | null
 type FeatureType = 'product' | 'collection' | 'all'
@@ -185,7 +186,22 @@ export default function CreateCampaignPage() {
         {/* Step 1 - Choose Method */}
         {step === 1 && (
           <div>
-            <h2 className="text-xl font-semibold text-gray-900 text-center mb-2">How do you want to create your campaign?</h2>
+            <Link href="/app/campaigns/templates">
+              <div className="flex items-center justify-between p-5 bg-gradient-to-r from-blue-700 to-blue-500 text-white rounded-2xl hover:from-blue-800 hover:to-blue-600 transition-all shadow-lg shadow-blue-200 mb-8 group cursor-pointer">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center text-2xl">&#10024;</div>
+                  <div className="text-left">
+                    <p className="font-bold text-lg">Start with Template</p>
+                    <p className="text-blue-200 text-sm">AI-generated templates based on your brand &amp; products</p>
+                  </div>
+                </div>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-200 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </Link>
+
+            <h2 className="text-xl font-semibold text-gray-900 text-center mb-2">Or create from scratch</h2>
             <p className="text-sm text-gray-500 text-center mb-8">Choose a method to get started</p>
 
             <div className="grid grid-cols-2 gap-4 mb-8">
