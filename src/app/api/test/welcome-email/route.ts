@@ -36,3 +36,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: error.message, stack: error.stack }, { status: 500 })
   }
 }
+
+export async function GET() {
+  return NextResponse.json({ message: 'Test route is working!' })
+}
