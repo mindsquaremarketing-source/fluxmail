@@ -29,12 +29,13 @@ export async function GET() {
       messages: [{
         role: 'user',
         content: `You are an email marketing expert for Shopify stores.
+Seed: ${Math.random().toString(36).substring(7)}
 
 Store: ${storeName}
 Products: ${products.map(p => p.title).join(', ')}
 Brand color: ${primaryColor}
 
-Generate 6 different email campaign templates for this store. Each should be unique and conversion-focused.
+Generate 6 UNIQUE and CREATIVE email campaign templates. Be original — don't repeat typical campaign ideas. Think outside the box and make each one specific to this store's products.
 
 Return ONLY valid JSON array, no markdown:
 [

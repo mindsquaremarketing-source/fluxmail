@@ -55,7 +55,7 @@ export default function TemplatesPage() {
     finally { setPreviewLoading(false) }
   }
 
-  const handleSaveCampaign = async () => {
+  const handleSave = async () => {
     if (!previewHtml) return
     setSaving(true)
     try {
@@ -65,8 +65,31 @@ export default function TemplatesPage() {
         body: JSON.stringify({ name: campaignName, subject: campaignSubject, htmlContent: previewHtml, status: 'draft' })
       })
       const data = await res.json()
-      if (data.campaign?.id || data.success) {
-        router.push('/app/campaigns')
+      if (data.campaign?.id || data.success) router.push('/app/campaigns')
+    } catch {}
+    finally { setSaving(false) }
+  }
+
+  const handleSendNow = async () => {
+    if (!previewHtml) return
+    setSaving(true)
+    try {
+      const res = await fetch('/api/campaigns', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: campaignName, subject: campaignSubject, htmlContent: previewHtml, status: 'draft' })
+      })
+      const data = await res.json()
+      const id = data.campaign?.id
+      if (id) {
+        const sendRes = await fetch(`/api/campaigns/${id}/send`, { method: 'POST' })
+        const sendData = await sendRes.json()
+        if (sendRes.ok) {
+          alert(`Sent to ${sendData.sent} contacts!`)
+          router.push('/app/campaigns')
+        } else {
+          alert('Error: ' + (sendData.error || 'Send failed'))
+        }
       }
     } catch {}
     finally { setSaving(false) }
@@ -76,6 +99,9 @@ export default function TemplatesPage() {
     sale: 'bg-red-100 text-red-700', new_arrival: 'bg-blue-100 text-blue-700',
     seasonal: 'bg-orange-100 text-orange-700', winback: 'bg-purple-100 text-purple-700',
     loyalty: 'bg-green-100 text-green-700', announcement: 'bg-yellow-100 text-yellow-700',
+    flash_sale: 'bg-red-100 text-red-700', product_launch: 'bg-blue-100 text-blue-700',
+    holiday: 'bg-orange-100 text-orange-700', reengagement: 'bg-purple-100 text-purple-700',
+    vip: 'bg-green-100 text-green-700', story: 'bg-yellow-100 text-yellow-700',
   }
 
   return (
@@ -124,12 +150,7 @@ export default function TemplatesPage() {
           <div className="grid grid-cols-3 gap-6">
             {[1, 2, 3, 4, 5, 6].map(i => (
               <div key={i} className="bg-white rounded-2xl border border-gray-200 overflow-hidden animate-pulse">
-                <div className="h-44 bg-gray-100" />
-                <div className="p-5 space-y-3">
-                  <div className="h-4 bg-gray-100 rounded w-3/4" />
-                  <div className="h-3 bg-gray-100 rounded" />
-                  <div className="h-8 bg-gray-100 rounded mt-2" />
-                </div>
+                <div className="h-44 bg-gray-100" /><div className="p-5 space-y-3"><div className="h-4 bg-gray-100 rounded w-3/4" /><div className="h-3 bg-gray-100 rounded" /><div className="h-8 bg-gray-100 rounded mt-2" /></div>
               </div>
             ))}
           </div>
@@ -137,7 +158,6 @@ export default function TemplatesPage() {
           <div className="text-center py-16">
             <div className="text-5xl mb-4">&#129302;</div>
             <h3 className="text-lg font-bold text-gray-900 mb-2">No templates generated</h3>
-            <p className="text-gray-500 mb-6">Check your AI API key or try again</p>
             <button onClick={fetchTemplates} className="px-6 py-3 bg-blue-700 text-white rounded-xl font-semibold hover:bg-blue-800">Try Again</button>
           </div>
         ) : (
@@ -172,7 +192,7 @@ export default function TemplatesPage() {
       {/* Preview Modal */}
       {previewTemplate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[95vh] flex flex-col overflow-hidden">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[95vh] flex flex-col overflow-hidden">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 flex-shrink-0">
               <div className="flex items-center gap-3">
                 <button onClick={() => setPreviewTemplate(null)} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg">
@@ -180,20 +200,26 @@ export default function TemplatesPage() {
                 </button>
                 <div>
                   <h2 className="font-bold text-gray-900">{previewTemplate.name}</h2>
-                  <p className="text-xs text-gray-500">Preview &amp; customize before saving</p>
+                  <p className="text-xs text-gray-500">Preview and customize your email</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
                 <button onClick={() => setPreviewTemplate(null)} className="px-4 py-2 text-sm border border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50">Cancel</button>
-                <button onClick={handleSaveCampaign} disabled={saving || previewLoading || !previewHtml}
-                  className="px-6 py-2 text-sm font-semibold bg-blue-700 text-white rounded-xl hover:bg-blue-800 disabled:opacity-50 flex items-center gap-2">
+                <button onClick={handleSave} disabled={saving || previewLoading || !previewHtml}
+                  className="px-4 py-2 text-sm font-semibold border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-50 disabled:opacity-50">
+                  {saving ? 'Saving...' : 'Save as Draft'}
+                </button>
+                <button onClick={handleSendNow} disabled={saving || previewLoading || !previewHtml}
+                  className="px-4 py-2 text-sm font-bold bg-blue-700 text-white rounded-xl hover:bg-blue-800 disabled:opacity-50 flex items-center gap-2 shadow-lg shadow-blue-200">
                   {saving ? (
-                    <><svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/></svg>Saving...</>
-                  ) : 'Save as Draft'}
+                    <><svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/></svg>Sending...</>
+                  ) : (
+                    <><svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>Send Now</>
+                  )}
                 </button>
               </div>
             </div>
-            <div className="px-6 py-4 border-b border-gray-100 bg-gray-50 flex-shrink-0">
+            <div className="px-6 py-3 border-b border-gray-100 bg-gray-50 flex-shrink-0">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Campaign Name</label>
@@ -201,32 +227,41 @@ export default function TemplatesPage() {
                     className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white" />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Email Subject Line</label>
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Subject Line</label>
                   <input type="text" value={campaignSubject} onChange={e => setCampaignSubject(e.target.value)}
                     className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white" />
                 </div>
               </div>
             </div>
-            <div className="flex-1 overflow-auto bg-gray-100 p-6">
-              {previewLoading ? (
-                <div className="flex items-center justify-center h-full">
-                  <div className="text-center">
-                    <svg className="animate-spin h-10 w-10 text-blue-600 mx-auto mb-4" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
-                    </svg>
-                    <p className="text-gray-500 font-medium">Generating your branded email...</p>
-                    <p className="text-gray-400 text-sm mt-1">Using your logo, colors and products</p>
+            <div className="flex-1 overflow-hidden flex">
+              <div className="flex-1 overflow-auto bg-gray-100 p-6">
+                {previewLoading ? (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="text-center">
+                      <svg className="animate-spin h-10 w-10 text-blue-600 mx-auto mb-4" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                      </svg>
+                      <p className="text-gray-500 font-medium">Generating branded email...</p>
+                      <p className="text-gray-400 text-sm mt-1">Using your logo, colors &amp; products</p>
+                    </div>
                   </div>
+                ) : previewHtml ? (
+                  <iframe key={previewHtml.length} srcDoc={previewHtml} className="w-full bg-white rounded-xl shadow-lg"
+                    style={{ maxWidth: '650px', height: '550px', border: 'none', display: 'block', margin: '0 auto' }} title="Preview" />
+                ) : (
+                  <div className="flex items-center justify-center h-full"><p className="text-gray-400">Failed to generate preview</p></div>
+                )}
+              </div>
+              <div className="w-80 border-l border-gray-200 flex flex-col bg-white flex-shrink-0">
+                <div className="px-4 py-3 border-b border-gray-100">
+                  <p className="text-sm font-semibold text-gray-700">Edit HTML</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Changes update the preview</p>
                 </div>
-              ) : previewHtml ? (
-                <iframe srcDoc={previewHtml} className="w-full bg-white rounded-xl shadow-lg"
-                  style={{ maxWidth: '650px', height: '600px', border: 'none', display: 'block', margin: '0 auto' }} title="Email Preview" />
-              ) : (
-                <div className="flex items-center justify-center h-full">
-                  <p className="text-gray-400">Failed to generate preview. Try again.</p>
-                </div>
-              )}
+                <textarea value={previewHtml} onChange={e => setPreviewHtml(e.target.value)}
+                  className="flex-1 p-4 text-xs font-mono text-gray-600 resize-none outline-none border-none"
+                  placeholder="HTML will appear here..." spellCheck={false} />
+              </div>
             </div>
           </div>
         </div>
