@@ -15,15 +15,14 @@ export async function POST(req: NextRequest) {
       where: { email }
     })
 
-    if (!store || !contact) {
-      return NextResponse.json({
-        error: 'Store or contact not found',
-        store: !!store,
-        contact: !!contact
-      }, { status: 404 })
+    if (!store) {
+      return NextResponse.json({ error: 'Store not found' }, { status: 404 })
+    }
+    if (!contact) {
+      return NextResponse.json({ error: 'Contact not found - add yourself as contact first' }, { status: 404 })
     }
 
-    await sendFlowEmail({
+    const result = await sendFlowEmail({
       storeId: store.id,
       contactId: contact.id,
       contactEmail: email,
@@ -32,8 +31,8 @@ export async function POST(req: NextRequest) {
       emailNumber: 1,
     })
 
-    return NextResponse.json({ success: true, message: `Welcome email sent to ${email}` })
+    return NextResponse.json({ success: true, message: `Welcome email sent to ${email}`, result })
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: error.message, stack: error.stack }, { status: 500 })
   }
 }
