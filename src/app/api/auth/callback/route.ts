@@ -23,6 +23,27 @@ export async function GET(req: NextRequest) {
 
     const host = req.nextUrl.searchParams.get('host') || ''
     const shop = session.shop
+    const appHost = process.env.HOST || 'https://fluxmail-silk.vercel.app'
+
+    // Auto sync branding on install
+    try {
+      await fetch(`${appHost}/api/sync/branding`, { method: 'POST' })
+      console.log('Branding synced on install')
+    } catch (e) {
+      console.error('Branding sync failed:', e)
+    }
+
+    // Auto sync contacts on install
+    try {
+      await fetch(`${appHost}/api/sync/contacts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ shop })
+      })
+      console.log('Contacts synced on install')
+    } catch (e) {
+      console.error('Contacts sync failed:', e)
+    }
 
     return NextResponse.redirect(
       `https://${shop}/admin/apps/fluxmail/app/dashboard`
