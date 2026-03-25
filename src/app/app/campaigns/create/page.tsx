@@ -191,7 +191,7 @@ export default function CreateCampaignPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <button
-                onClick={() => setMethod('ai')}
+                onClick={() => { setMethod('ai'); setStep(2) }}
                 className={`flex flex-col items-center gap-3 p-8 rounded-xl border-2 transition-all ${
                   method === 'ai' ? 'border-blue-600 bg-blue-50' : 'border-gray-200 bg-white hover:border-gray-300'
                 }`}
