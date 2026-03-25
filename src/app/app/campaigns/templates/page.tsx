@@ -6,6 +6,9 @@ import dynamic from 'next/dynamic'
 
 const EmailBlockEditor = dynamic(() => import('@/components/EmailBlockEditor'), { ssr: false })
 
+const CACHE_KEY = 'fluxmail_campaign_templates'
+const CACHE_TTL = 30 * 60 * 1000 // 30 minutes
+
 export default function TemplatesPage() {
   const router = useRouter()
   const [templates, setTemplates] = useState<any[]>([])
@@ -18,29 +21,102 @@ export default function TemplatesPage() {
   const [campaignName, setCampaignName] = useState('')
   const [campaignSubject, setCampaignSubject] = useState('')
   const [saving, setSaving] = useState(false)
+  const [templatePreviews, setTemplatePreviews] = useState<Record<string, string>>({})
+  const [previewsReady, setPreviewsReady] = useState(false)
 
-  useEffect(() => { fetchTemplates() }, [])
+  useEffect(() => { loadTemplates() }, [])
 
-  const fetchTemplates = async () => {
+  // Load from cache or generate fresh
+  const loadTemplates = async () => {
     setLoading(true)
+    try {
+      const cached = localStorage.getItem(CACHE_KEY)
+      if (cached) {
+        const { templates: ct, store: cs, products: cp, previews: cpv, timestamp } = JSON.parse(cached)
+        if (Date.now() - timestamp < CACHE_TTL && ct?.length > 0) {
+          setTemplates(ct)
+          setStore(cs)
+          setProducts(cp || [])
+          setTemplatePreviews(cpv || {})
+          setPreviewsReady(Object.keys(cpv || {}).length > 0)
+          setLoading(false)
+          return
+        }
+      }
+    } catch {}
+    await generateFresh()
+  }
+
+  // Fetch templates from AI API and pre-generate all previews
+  const generateFresh = async () => {
+    setLoading(true)
+    setPreviewsReady(false)
     try {
       const res = await fetch('/api/campaigns/templates')
       const data = await res.json()
-      setTemplates(data.templates || [])
+      const tpls = data.templates || []
+      setTemplates(tpls)
       setStore(data.store)
       setProducts(data.products || [])
+
+      // Pre-generate all 6 previews in parallel
+      const previews: Record<string, string> = {}
+      await Promise.all(tpls.map(async (t: any) => {
+        try {
+          const r = await fetch('/api/ai/generate-campaign', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              prompt: `${t.description}. Headline: ${t.headline}. Body: ${t.bodyText}. CTA: ${t.ctaText}.`,
+              discountCode: t.discountCode || '',
+              discountValue: t.discountValue || '',
+              templateName: t.name,
+              previewOnly: true,
+            })
+          })
+          const d = await r.json()
+          if (d.html) previews[t.id] = d.html
+        } catch {}
+      }))
+
+      setTemplatePreviews(previews)
+      setPreviewsReady(true)
+
+      // Cache everything
+      try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify({
+          templates: tpls,
+          store: data.store,
+          products: data.products || [],
+          previews,
+          timestamp: Date.now(),
+        }))
+      } catch {}
     } catch {}
     finally { setLoading(false) }
   }
 
-  const handleSelectTemplate = async (template: any) => {
+  // Regenerate button — clear cache and start fresh
+  const handleRegenerate = () => {
+    try { localStorage.removeItem(CACHE_KEY) } catch {}
+    setTemplatePreviews({})
+    generateFresh()
+  }
+
+  // Open modal instantly with pre-loaded preview
+  const handleSelectTemplate = (template: any) => {
     setPreviewTemplate(template)
-    setPreviewHtml('')
-    setPreviewLoading(true)
     setCampaignName(template.name)
     setCampaignSubject(template.subject)
-    try {
-      const res = await fetch('/api/ai/generate-campaign', {
+    const cached = templatePreviews[template.id]
+    if (cached) {
+      setPreviewHtml(cached)
+      setPreviewLoading(false)
+    } else {
+      setPreviewHtml('')
+      setPreviewLoading(true)
+      // Fallback: generate on demand if somehow not pre-loaded
+      fetch('/api/ai/generate-campaign', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -51,11 +127,11 @@ export default function TemplatesPage() {
           previewOnly: true,
         })
       })
-      const data = await res.json()
-      if (data.html) setPreviewHtml(data.html)
-      if (data.subject) setCampaignSubject(data.subject)
-    } catch {}
-    finally { setPreviewLoading(false) }
+        .then(r => r.json())
+        .then(data => { if (data.html) setPreviewHtml(data.html) })
+        .catch(() => {})
+        .finally(() => setPreviewLoading(false))
+    }
   }
 
   const handleSave = async () => {
@@ -122,7 +198,7 @@ export default function TemplatesPage() {
               <p className="text-sm text-gray-500">AI-generated using your brand &amp; products</p>
             </div>
           </div>
-          <button onClick={fetchTemplates} disabled={loading}
+          <button onClick={handleRegenerate} disabled={loading}
             className="flex items-center gap-2 px-4 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-600 disabled:opacity-50">
             {loading ? (
               <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/></svg>
@@ -161,7 +237,7 @@ export default function TemplatesPage() {
           <div className="text-center py-16">
             <div className="text-5xl mb-4">&#129302;</div>
             <h3 className="text-lg font-bold text-gray-900 mb-2">No templates generated</h3>
-            <button onClick={fetchTemplates} className="px-6 py-3 bg-blue-700 text-white rounded-xl font-semibold hover:bg-blue-800">Try Again</button>
+            <button onClick={handleRegenerate} className="px-6 py-3 bg-blue-700 text-white rounded-xl font-semibold hover:bg-blue-800">Try Again</button>
           </div>
         ) : (
           <div className="grid grid-cols-3 gap-6">
