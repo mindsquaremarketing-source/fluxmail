@@ -186,27 +186,12 @@ export default function CreateCampaignPage() {
         {/* Step 1 - Choose Method */}
         {step === 1 && (
           <div>
-            <Link href="/app/campaigns/templates">
-              <div className="flex items-center justify-between p-5 bg-gradient-to-r from-blue-700 to-blue-500 text-white rounded-2xl hover:from-blue-800 hover:to-blue-600 transition-all shadow-lg shadow-blue-200 mb-8 group cursor-pointer">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center text-2xl">&#10024;</div>
-                  <div className="text-left">
-                    <p className="font-bold text-lg">Start with Template</p>
-                    <p className="text-blue-200 text-sm">AI-generated templates based on your brand &amp; products</p>
-                  </div>
-                </div>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-200 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </div>
-            </Link>
-
-            <h2 className="text-xl font-semibold text-gray-900 text-center mb-2">Or create from scratch</h2>
+            <h2 className="text-xl font-semibold text-gray-900 text-center mb-2">How do you want to create your campaign?</h2>
             <p className="text-sm text-gray-500 text-center mb-8">Choose a method to get started</p>
 
-            <div className="grid grid-cols-2 gap-4 mb-8">
+            <div className="grid grid-cols-2 gap-4">
               <button
-                onClick={() => setMethod('ai')}
+                onClick={() => { setMethod('ai'); setStep(2) }}
                 className={`flex flex-col items-center gap-3 p-8 rounded-xl border-2 transition-all ${
                   method === 'ai' ? 'border-blue-600 bg-blue-50' : 'border-gray-200 bg-white hover:border-gray-300'
                 }`}
@@ -220,32 +205,23 @@ export default function CreateCampaignPage() {
                 <span className="text-xs text-gray-400">Let AI create your campaign</span>
               </button>
 
-              <button
-                onClick={() => setMethod('template')}
-                className={`flex flex-col items-center gap-3 p-8 rounded-xl border-2 transition-all ${
-                  method === 'template' ? 'border-blue-600 bg-blue-50' : 'border-gray-200 bg-white hover:border-gray-300'
-                }`}
-              >
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${method === 'template' ? 'bg-blue-100' : 'bg-gray-100'}`}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={method === 'template' ? '#1E40AF' : '#6b7280'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><line x1="3" y1="9" x2="21" y2="9" /><line x1="9" y1="21" x2="9" y2="9" />
-                  </svg>
+              <Link href="/app/campaigns/templates" className="block">
+                <div className="flex flex-col items-center gap-3 p-8 rounded-xl border-2 border-gray-200 bg-white hover:border-blue-500 hover:bg-blue-50 transition-all relative cursor-pointer">
+                  <span className="absolute top-2 right-2 bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full">Recommended</span>
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-gray-100">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><line x1="3" y1="9" x2="21" y2="9" /><line x1="9" y1="21" x2="9" y2="9" />
+                    </svg>
+                  </div>
+                  <span className="text-sm font-medium text-gray-700">Start with Template</span>
+                  <span className="text-xs text-gray-400 text-center">AI-generated templates based on your brand &amp; products</span>
+                  <div className="flex gap-2 mt-1">
+                    <span className="text-[10px] text-gray-400">&#127912; Your brand</span>
+                    <span className="text-[10px] text-gray-400">&#128717; Real products</span>
+                    <span className="text-[10px] text-gray-400">&#129302; AI powered</span>
+                  </div>
                 </div>
-                <span className={`text-sm font-medium ${method === 'template' ? 'text-blue-700' : 'text-gray-700'}`}>Start from template</span>
-                <span className="text-xs text-gray-400">Choose from pre-built designs</span>
-              </button>
-            </div>
-
-            <div className="flex justify-center">
-              <button
-                onClick={() => method && setStep(2)}
-                disabled={!method}
-                className={`px-8 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                  method ? 'bg-gray-900 text-white hover:bg-gray-800' : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                }`}
-              >
-                Continue
-              </button>
+              </Link>
             </div>
           </div>
         )}
