@@ -2,6 +2,9 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
+
+const EmailBlockEditor = dynamic(() => import('@/components/EmailBlockEditor'), { ssr: false })
 
 export default function TemplatesPage() {
   const router = useRouter()
@@ -253,14 +256,14 @@ export default function TemplatesPage() {
                   <div className="flex items-center justify-center h-full"><p className="text-gray-400">Failed to generate preview</p></div>
                 )}
               </div>
-              <div className="w-80 border-l border-gray-200 flex flex-col bg-white flex-shrink-0">
-                <div className="px-4 py-3 border-b border-gray-100">
-                  <p className="text-sm font-semibold text-gray-700">Edit HTML</p>
-                  <p className="text-xs text-gray-400 mt-0.5">Changes update the preview</p>
-                </div>
-                <textarea value={previewHtml} onChange={e => setPreviewHtml(e.target.value)}
-                  className="flex-1 p-4 text-xs font-mono text-gray-600 resize-none outline-none border-none"
-                  placeholder="HTML will appear here..." spellCheck={false} />
+              <div className="w-96 border-l border-gray-200 flex flex-col bg-white flex-shrink-0">
+                {previewHtml && !previewLoading && (
+                  <EmailBlockEditor
+                    initialHtml={previewHtml}
+                    primaryColor={store?.primaryColor || '#1E40AF'}
+                    onHtmlChange={setPreviewHtml}
+                  />
+                )}
               </div>
             </div>
           </div>
