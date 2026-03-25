@@ -8,13 +8,19 @@ export const dynamic = 'force-dynamic'
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
+    console.log('AI Generate Campaign — received body:', JSON.stringify(body))
     const {
       prompt,
+      featureType,
       productId,
       productName: inputProductName,
       productImage: inputProductImage,
+      productPrice: inputProductPrice,
       discountCode,
       discountValue,
+      discountStartDate,
+      discountStartTime,
+      hasEndDate,
       templateName,
       previewOnly,
     } = body
@@ -62,8 +68,9 @@ export async function POST(req: NextRequest) {
 
     const productName = featuredProduct?.title || inputProductName || 'Featured Product'
     const productImage = featuredProduct?.images?.[0]?.src || inputProductImage || ''
-    const productPrice = featuredProduct?.variants?.[0]?.price || '0.00'
+    const productPrice = featuredProduct?.variants?.[0]?.price || inputProductPrice || '0.00'
     const productUrl = featuredProduct?.handle ? `${website}/products/${featuredProduct.handle}` : website
+    const featureLabel = featureType === 'collection' ? 'Collection' : featureType === 'all' ? 'All Products' : 'Product'
 
     // Build logo HTML
     const logoHtml = logoUrl
@@ -76,6 +83,7 @@ export async function POST(req: NextRequest) {
   <p style="color:${primaryColor};font-size:11px;font-weight:800;margin:0 0 10px;letter-spacing:3px;text-transform:uppercase;font-family:${fontFamily},sans-serif;">Exclusive Offer</p>
   <div style="background:${primaryColor};color:${textOnPrimary};display:inline-block;padding:14px 36px;border-radius:10px;font-size:22px;font-weight:900;letter-spacing:4px;font-family:${fontFamily},sans-serif;">${discountCode}</div>
   <p style="color:#6B7280;font-size:13px;margin:10px 0 0;font-family:${fontFamily},sans-serif;">Save ${discountValue || '10'}% on your order</p>
+${discountStartDate ? `<p style="color:#9CA3AF;font-size:11px;margin:8px 0 0;font-family:${fontFamily},sans-serif;">Valid from ${discountStartDate}${discountStartTime ? ' ' + discountStartTime : ''}${hasEndDate ? ' — Limited time!' : ''}</p>` : ''}
 </div>`
       : ''
 
@@ -91,21 +99,29 @@ export async function POST(req: NextRequest) {
 
     const client = new Anthropic()
 
-    const aiPrompt = `You are an expert email marketer. Generate ONLY the inner content HTML for an email campaign. Do NOT include <!DOCTYPE>, <html>, <head>, <body>, or any wrapper — I will wrap it myself.
+    const discountDateInfo = discountStartDate
+      ? `Valid from ${discountStartDate}${discountStartTime ? ' ' + discountStartTime : ''}${hasEndDate ? ' (limited time)' : ''}`
+      : ''
 
-Campaign brief: ${prompt || 'General promotional campaign for ' + storeName}
-Store name: ${storeName}
-Product: ${productName} ($${productPrice})
-${discountCode ? `Discount code: ${discountCode} for ${discountValue}% off` : 'No discount code'}
+    const aiPrompt = `You are an expert email marketer. Generate compelling copy for an email campaign.
 
-Generate 3-4 paragraphs of compelling marketing copy that:
-1. Opens with an attention-grabbing headline related to: "${prompt || 'Special offer from ' + storeName}"
-2. Describes why the customer should act now
-3. Mentions the product "${productName}" naturally
-${discountCode ? `4. References the discount code ${discountCode} for ${discountValue}% off` : ''}
+Campaign goal: ${prompt || 'General promotional campaign for ' + storeName}
+Store: ${storeName}
+Feature type: ${featureLabel}
+Featured product: ${productName} — $${productPrice}
+${discountCode ? `Discount: Code ${discountCode} for ${discountValue}% off` : 'No discount'}
+${discountDateInfo ? `Offer dates: ${discountDateInfo}` : ''}
 
-Return ONLY a JSON object with no markdown, no backticks:
-{"subject":"email subject line with emoji","headline":"main headline text","body":"2-3 sentences of body copy","cta":"call to action button text"}`
+Write copy that:
+1. Has an attention-grabbing headline about: "${prompt || 'Special offer from ' + storeName}"
+2. Mentions "${productName}" by name and its $${productPrice} price
+3. Creates urgency for the customer to act now
+${discountCode ? `4. Highlights the discount code ${discountCode} (${discountValue}% off)${discountDateInfo ? ' — ' + discountDateInfo : ''}` : ''}
+
+Return ONLY a JSON object, no markdown, no backticks:
+{"subject":"email subject with emoji","headline":"main headline","body":"2-3 sentences body copy mentioning product and urgency","cta":"button text"}`
+
+    console.log('AI prompt:', aiPrompt)
 
     const response = await client.messages.create({
       model: 'claude-haiku-4-5-20251001',

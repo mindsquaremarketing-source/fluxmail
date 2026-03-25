@@ -31,6 +31,7 @@ export default function CreateCampaignPage() {
   const [hasEndDate, setHasEndDate] = useState(false)
   const [productName, setProductName] = useState('')
   const [productImage, setProductImage] = useState('')
+  const [productPrice, setProductPrice] = useState('')
   const [products, setProducts] = useState<any[]>([])
   const [generating, setGenerating] = useState(false)
   const [generated, setGenerated] = useState<GeneratedCampaign | null>(null)
@@ -89,16 +90,24 @@ export default function CreateCampaignPage() {
     setError(null)
     startLoadingAnimation()
 
+    console.log('Generating campaign with:', { prompt, featureType, productName, productImage, productPrice, discountCode, discountValue, startDate, startTime })
+
     try {
       const res = await fetch('/api/ai/generate-campaign', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          prompt: prompt,
-          discountCode: discountCode,
-          discountValue: discountValue,
-          productName: productName,
-          productImage: productImage,
+          prompt,
+          featureType,
+          productId: featuredProduct,
+          productName,
+          productImage,
+          productPrice,
+          discountCode: discountMethod === 'code' ? discountCode : '',
+          discountValue: discountMethod === 'code' ? discountValue : '',
+          discountStartDate: startDate,
+          discountStartTime: startTime,
+          hasEndDate,
         }),
       })
 
@@ -272,6 +281,7 @@ export default function CreateCampaignPage() {
                     if (product) {
                       setProductName(product.title)
                       setProductImage(product.images?.[0]?.src || '')
+                      setProductPrice(product.variants?.[0]?.price || '')
                     }
                   }}
                   className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
