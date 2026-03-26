@@ -9,6 +9,7 @@ interface TemplatePreviewModalProps {
   store: any
   initialHtml: string
   initialLoading: boolean
+  products?: any[]
   onClose: () => void
   onSave: (name: string, subject: string, html: string) => Promise<void>
   onSendNow: (name: string, subject: string, html: string) => Promise<void>
@@ -19,6 +20,7 @@ export default function TemplatePreviewModal({
   store,
   initialHtml,
   initialLoading,
+  products = [],
   onClose,
   onSave,
   onSendNow,
@@ -133,6 +135,7 @@ export default function TemplatePreviewModal({
                 initialHtml={previewHtml}
                 primaryColor={store?.primaryColor || '#1E40AF'}
                 onHtmlChange={setPreviewHtml}
+                products={products}
               />
             )}
           </div>

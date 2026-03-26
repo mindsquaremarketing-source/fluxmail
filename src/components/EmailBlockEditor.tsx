@@ -8,10 +8,70 @@ function htmlToBlocks(html: string): any[] {
   const parser = new DOMParser()
   const doc = parser.parseFromString(html, 'text/html')
 
+  // Step 4: Auto-detect product blocks — div[data-product-id] or img+heading+price+"Shop Now" pattern
+  const productDivs = doc.querySelectorAll('div[data-product-id]')
+  const processedParents = new Set<Node>()
+  productDivs.forEach(div => {
+    processedParents.add(div)
+    const img = div.querySelector('img')
+    const h3 = div.querySelector('h3')
+    const priceEl = div.querySelector('p')
+    const link = div.querySelector('a')
+    if (h3) {
+      blocks.push({
+        id: Math.random().toString(36).slice(2, 10),
+        type: 'product',
+        data: {
+          id: (div as HTMLElement).dataset.productId || '',
+          title: h3.textContent || '',
+          image: img?.getAttribute('src') || '',
+          price: priceEl?.textContent || '',
+          url: link?.getAttribute('href') || '#',
+        }
+      })
+    }
+  })
+
+  // Also detect product-like patterns: centered div with img, heading, price, and "Shop Now"
+  if (productDivs.length === 0) {
+    const centeredDivs = doc.querySelectorAll('div[style*="text-align:center"], div[style*="text-align: center"]')
+    centeredDivs.forEach(div => {
+      const link = div.querySelector('a')
+      const linkText = (link?.textContent || '').trim().toLowerCase()
+      if (linkText === 'shop now') {
+        const img = div.querySelector('img')
+        const h3 = div.querySelector('h3')
+        const priceEl = div.querySelector('p')
+        if (h3 || img) {
+          processedParents.add(div)
+          blocks.push({
+            id: Math.random().toString(36).slice(2, 10),
+            type: 'product',
+            data: {
+              id: '',
+              title: h3?.textContent || img?.getAttribute('alt') || '',
+              image: img?.getAttribute('src') || '',
+              price: priceEl?.textContent || '',
+              url: link?.getAttribute('href') || '#',
+            }
+          })
+        }
+      }
+    })
+  }
+
   // Extract meaningful content from email tables
   const allElements = doc.querySelectorAll('h1, h2, h3, p, img, hr, ul, ol, a[style*="inline-block"]')
 
   allElements.forEach(el => {
+    // Skip elements already captured as product blocks
+    let parent: Node | null = el
+    let skip = false
+    while (parent) {
+      if (processedParents.has(parent)) { skip = true; break }
+      parent = parent.parentNode
+    }
+    if (skip) return
     const tag = el.tagName.toLowerCase()
     const text = (el.textContent || '').trim()
     if (!text && tag !== 'img' && tag !== 'hr') return
@@ -74,6 +134,17 @@ function blocksToEmailHtml(blocks: any[], primaryColor: string): string {
         ).join('')
         body += `<${tag} style="padding-left:24px;margin:0 0 16px;">${items}</${tag}>`
         break
+      case 'product':
+        if (block.data.title) {
+          const imgHtml = block.data.image
+            ? `<img src="${block.data.image}" alt="${block.data.title}" style="width:100%;max-width:400px;border-radius:8px;display:block;margin:0 auto 16px;" />`
+            : ''
+          const priceHtml = block.data.price
+            ? `<p style="font-family:sans-serif;font-size:18px;color:#1E40AF;font-weight:bold;margin:0 0 16px;">${block.data.price}</p>`
+            : ''
+          body += `<div style="text-align:center;padding:20px;" data-product-id="${block.data.id || ''}">${imgHtml}<h3 style="font-family:sans-serif;font-size:20px;color:#1a1a1a;margin:0 0 8px;">${block.data.title}</h3>${priceHtml}<a href="${block.data.url || '#'}" style="background:#1E40AF;color:white;padding:12px 32px;border-radius:24px;text-decoration:none;font-family:sans-serif;font-size:16px;">Shop Now</a></div>`
+        }
+        break
     }
   }
 
@@ -84,9 +155,10 @@ interface Props {
   initialHtml: string
   primaryColor: string
   onHtmlChange: (html: string) => void
+  products?: any[]
 }
 
-export default function EmailBlockEditor({ initialHtml, primaryColor, onHtmlChange }: Props) {
+export default function EmailBlockEditor({ initialHtml, primaryColor, onHtmlChange, products = [] }: Props) {
   const editorRef = useRef<any>(null)
   const holderRef = useRef<HTMLDivElement>(null)
   const initializedRef = useRef(false)
@@ -130,6 +202,7 @@ ${contentHtml}
       const ImageTool = (await import('@editorjs/image')).default
       const Delimiter = (await import('@editorjs/delimiter')).default
       const List = (await import('@editorjs/list')).default
+      const ProductBlock = (await import('@/app/app/campaigns/templates/ProductBlock')).default
 
       const blocks = htmlToBlocks(initialHtml)
 
@@ -149,6 +222,12 @@ ${contentHtml}
           },
           delimiter: Delimiter,
           list: List,
+          product: {
+            class: ProductBlock as any,
+            config: {
+              products: products,
+            }
+          },
         },
         data: { blocks },
         onChange: handleChange,
