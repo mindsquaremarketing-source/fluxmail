@@ -106,6 +106,16 @@ export default function TemplatePreviewModal({
     }
   })
 
+  // Detect which product is currently shown in the HTML by matching product titles
+  const detectCurrentProductId = (): string => {
+    if (!previewHtml || products.length === 0) return ''
+    const lower = previewHtml.toLowerCase()
+    for (const p of products) {
+      if (p.title && lower.includes(p.title.toLowerCase())) return p.id.toString()
+    }
+    return ''
+  }
+
   const handleProductChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const productId = e.target.value
     if (!productId || !previewHtml) return
@@ -194,11 +204,12 @@ export default function TemplatePreviewModal({
           <div className="w-96 border-l border-gray-200 flex flex-col bg-white flex-shrink-0">
             {products.length > 0 && previewHtml && !previewLoading && (
               <div className="px-4 py-3 border-b border-gray-100">
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Change Product</label>
+                <p className="text-sm font-semibold text-gray-700">Featured Product</p>
+                <p className="text-xs text-gray-400 mt-0.5 mb-2">Select a product to feature in your email</p>
                 <select
                   onChange={handleProductChange}
-                  defaultValue=""
-                  className="w-full border border-gray-200 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                  value={detectCurrentProductId()}
+                  className="w-full border border-gray-200 rounded-lg p-2 text-sm mb-4"
                 >
                   <option value="" disabled>Select a product...</option>
                   {products.map((p: any) => (

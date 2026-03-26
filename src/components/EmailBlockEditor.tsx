@@ -8,10 +8,49 @@ function htmlToBlocks(html: string): any[] {
   const parser = new DOMParser()
   const doc = parser.parseFromString(html, 'text/html')
 
+  // Identify product section elements to skip in the editor.
+  // Product sections contain: a product image, product name (h3), price ($), and "Shop Now" link.
+  // These are handled by the Change Product dropdown instead.
+  const skipElements = new Set<Element>()
+
+  // Find "Shop Now" links and mark their parent container's children as product elements
+  const allLinks = doc.querySelectorAll('a')
+  allLinks.forEach(link => {
+    const linkText = (link.textContent || '').trim().toLowerCase()
+    if (linkText === 'shop now' || linkText === 'shop now →') {
+      // Walk up to find the product container (a td or div wrapping the product section)
+      const container = link.closest('td') || link.closest('div')
+      if (container) {
+        // Mark the Shop Now link itself
+        skipElements.add(link)
+        // Mark product image — large img in same container
+        container.querySelectorAll('img').forEach(img => {
+          const style = img.getAttribute('style') || ''
+          if (style.includes('max-width') || style.includes('border-radius') || style.includes('width:100%')) {
+            skipElements.add(img)
+          }
+        })
+        // Mark product name h3
+        container.querySelectorAll('h3').forEach(h3 => skipElements.add(h3))
+        // Mark price paragraph (contains $)
+        container.querySelectorAll('p').forEach(p => {
+          const text = (p.textContent || '').trim()
+          const style = p.getAttribute('style') || ''
+          if (text.includes('$') || ((style.includes('font-weight:bold') || style.includes('font-weight: bold')) && text.length < 30)) {
+            skipElements.add(p)
+          }
+        })
+      }
+    }
+  })
+
   // Extract meaningful content from email tables
   const allElements = doc.querySelectorAll('h1, h2, h3, p, img, hr, ul, ol, a[style*="inline-block"]')
 
   allElements.forEach(el => {
+    // Skip product section elements — handled by the product dropdown
+    if (skipElements.has(el)) return
+
     const tag = el.tagName.toLowerCase()
     const text = (el.textContent || '').trim()
     if (!text && tag !== 'img' && tag !== 'hr') return
