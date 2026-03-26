@@ -6,6 +6,7 @@ import { generateWelcome1 } from '@/lib/template-engine'
 export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
+  console.log('Contact add triggered')
   try {
     const { email, firstName, lastName } = await req.json()
     const store = await prisma.store.findFirst({ orderBy: { createdAt: 'desc' } })
@@ -43,13 +44,25 @@ export async function POST(req: NextRequest) {
       const unsubscribeUrl = `${baseUrl}/unsubscribe?email=${encodeURIComponent(email)}&store=${store.shopDomain}`
       const finalHtml = html.replace(/\{\{UNSUBSCRIBE_URL\}\}/g, unsubscribeUrl)
 
-      await resend.emails.send({
-        from: `${store.senderName || store.companyName || 'Fluxmail'} <hello@tryfluxmail.com>`,
-        to: email,
-        subject: `Welcome to ${store.companyName || 'Our Store'}! Here is 10% off`,
-        html: finalHtml,
-      })
-      welcomeEmailSent = true
+      const fromAddress = 'Fluxmail <hello@tryfluxmail.com>'
+      const toAddress = email
+      const subjectLine = `Welcome to ${store.companyName || 'Our Store'}! Here is 10% off`
+      console.log('Sending welcome email:', { from: fromAddress, to: toAddress, subject: subjectLine })
+
+      try {
+        const result = await resend.emails.send({
+          from: fromAddress,
+          to: toAddress,
+          subject: subjectLine,
+          html: finalHtml,
+        })
+        console.log('Resend response:', JSON.stringify(result))
+        welcomeEmailSent = true
+      } catch (sendError: any) {
+        console.error('Resend send failed:', sendError)
+        console.error('Full error details:', JSON.stringify(sendError, Object.getOwnPropertyNames(sendError)))
+        throw sendError
+      }
     } catch (e: any) { welcomeEmailError = e.message }
     return NextResponse.json({ success: true, welcomeEmailSent, welcomeEmailError })
   } catch (error: any) {
