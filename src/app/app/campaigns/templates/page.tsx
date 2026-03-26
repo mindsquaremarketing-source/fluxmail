@@ -274,6 +274,7 @@ export default function TemplatesPage() {
           store={store}
           initialHtml={templatePreviews[previewTemplate.id] || ''}
           initialLoading={!templatePreviews[previewTemplate.id]}
+          products={products}
           onClose={() => setPreviewTemplate(null)}
           onSave={handleSave}
           onSendNow={handleSendNow}
