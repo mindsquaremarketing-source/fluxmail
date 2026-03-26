@@ -15,6 +15,60 @@ interface TemplatePreviewModalProps {
   onSendNow: (name: string, subject: string, html: string) => Promise<void>
 }
 
+function swapProductInHtml(html: string, product: any): string {
+  const parser = new DOMParser()
+  const doc = parser.parseFromString(html, 'text/html')
+
+  const image = product.images?.[0]?.src || ''
+  const title = product.title || ''
+  const price = product.variants?.[0]?.price ? `$${product.variants[0].price}` : ''
+
+  // Find all product images (non-tracking, non-logo images inside the email body)
+  const imgs = doc.querySelectorAll('img')
+  const productImgs = Array.from(imgs).filter(img => {
+    const src = img.src || ''
+    const w = img.getAttribute('width')
+    // Skip tracking pixels, logos (typically small or in header)
+    if (w === '1' || src.includes('track')) return false
+    // Skip logos — usually in the header td with background color
+    const parentTd = img.closest('td')
+    if (parentTd?.getAttribute('style')?.includes('background:')) return false
+    // Likely a product image if it's sizable
+    const style = img.getAttribute('style') || ''
+    if (style.includes('max-width') || style.includes('border-radius') || style.includes('width:100%')) return true
+    return false
+  })
+
+  // Swap the first product image found
+  const firstImg = productImgs[0]
+  if (firstImg && image) {
+    firstImg.src = image
+    firstImg.alt = title
+  }
+
+  // Find product name — look for h3 or bold text near the product image
+  const headings = doc.querySelectorAll('h3')
+  if (headings.length > 0) {
+    // Use the last h3 as it's more likely the product name (first might be the email headline)
+    const productHeading = headings[headings.length > 1 ? headings.length - 1 : 0]
+    if (productHeading) productHeading.textContent = title
+  }
+
+  // Find price — look for text with $ or bold/colored price patterns
+  const allPs = doc.querySelectorAll('p')
+  for (const p of Array.from(allPs)) {
+    const text = p.textContent || ''
+    const style = p.getAttribute('style') || ''
+    // Match price-like patterns: contains $, is bold, or has a brand color
+    if ((text.includes('$') || (style.includes('font-weight:bold') || style.includes('font-weight: bold'))) && text.length < 30) {
+      if (price) p.textContent = price
+      break
+    }
+  }
+
+  return doc.documentElement.outerHTML
+}
+
 export default function TemplatePreviewModal({
   template,
   store,
@@ -51,6 +105,14 @@ export default function TemplatePreviewModal({
         .finally(() => setPreviewLoading(false))
     }
   })
+
+  const handleProductChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const productId = e.target.value
+    if (!productId || !previewHtml) return
+    const product = products.find(p => p.id.toString() === productId)
+    if (!product) return
+    setPreviewHtml(swapProductInHtml(previewHtml, product))
+  }
 
   const handleSave = async () => {
     if (!previewHtml) return
@@ -130,12 +192,28 @@ export default function TemplatePreviewModal({
             )}
           </div>
           <div className="w-96 border-l border-gray-200 flex flex-col bg-white flex-shrink-0">
+            {products.length > 0 && previewHtml && !previewLoading && (
+              <div className="px-4 py-3 border-b border-gray-100">
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Change Product</label>
+                <select
+                  onChange={handleProductChange}
+                  defaultValue=""
+                  className="w-full border border-gray-200 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                >
+                  <option value="" disabled>Select a product...</option>
+                  {products.map((p: any) => (
+                    <option key={p.id} value={p.id.toString()}>
+                      {p.title}{p.variants?.[0]?.price ? ` — $${p.variants[0].price}` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
             {previewHtml && !previewLoading && (
               <EmailBlockEditor
                 initialHtml={previewHtml}
                 primaryColor={store?.primaryColor || '#1E40AF'}
                 onHtmlChange={setPreviewHtml}
-                products={products}
               />
             )}
           </div>
