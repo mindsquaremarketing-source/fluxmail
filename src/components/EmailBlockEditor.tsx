@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useRef, useCallback, useState } from 'react'
+import { createPortal } from 'react-dom'
 
 // Extract product info from email HTML
 function extractProductInfo(html: string): { image: string; title: string; price: string; url: string } | null {
@@ -7,7 +8,6 @@ function extractProductInfo(html: string): { image: string; title: string; price
   const parser = new DOMParser()
   const doc = parser.parseFromString(html, 'text/html')
 
-  // Find "Shop Now" link to identify the product section
   const allLinks = doc.querySelectorAll('a')
   for (const link of Array.from(allLinks)) {
     const linkText = (link.textContent || '').trim().toLowerCase()
@@ -40,21 +40,14 @@ function extractProductInfo(html: string): { image: string; title: string; price
       }
 
       const url = (link as HTMLAnchorElement).getAttribute('href') || '#'
-
       return { image, title, price, url }
     }
   }
   return null
 }
 
-// Parse email HTML into Editor.js blocks, skipping product section elements
-function htmlToBlocks(html: string): any[] {
-  if (!html) return []
-  const blocks: any[] = []
-  const parser = new DOMParser()
-  const doc = parser.parseFromString(html, 'text/html')
-
-  // Identify product section elements to skip
+// Identify which elements belong to the product section
+function getProductElements(doc: Document): Set<Element> {
   const skipElements = new Set<Element>()
   const allLinks = doc.querySelectorAll('a')
   allLinks.forEach(link => {
@@ -80,11 +73,44 @@ function htmlToBlocks(html: string): any[] {
       }
     }
   })
+  return skipElements
+}
 
-  // Extract meaningful content from email tables
+// Parse email HTML into Editor.js blocks in document order, returning product position
+function htmlToBlocks(html: string): { blocks: any[]; productIndex: number } {
+  if (!html) return { blocks: [], productIndex: -1 }
+  const blocks: any[] = []
+  let productIndex = -1
+  const parser = new DOMParser()
+  const doc = parser.parseFromString(html, 'text/html')
+
+  const skipElements = getProductElements(doc)
+
+  // Find the first "Shop Now" link to identify the product container
+  let productContainer: Element | null = null
+  const allLinks = doc.querySelectorAll('a')
+  for (const link of Array.from(allLinks)) {
+    const linkText = (link.textContent || '').trim().toLowerCase()
+    if (linkText === 'shop now' || linkText === 'shop now →') {
+      productContainer = link.closest('td') || link.closest('div')
+      break
+    }
+  }
+
+  // Walk all relevant elements in document order
   const allElements = doc.querySelectorAll('h1, h2, h3, p, img, hr, ul, ol, a[style*="inline-block"]')
+  let productInserted = false
 
   allElements.forEach(el => {
+    // Check if this element is inside or IS the product container — insert product marker at this position
+    if (productContainer && !productInserted) {
+      if (skipElements.has(el) || productContainer.contains(el)) {
+        productIndex = blocks.length
+        productInserted = true
+        return
+      }
+    }
+
     if (skipElements.has(el)) return
 
     const tag = el.tagName.toLowerCase()
@@ -118,7 +144,7 @@ function htmlToBlocks(html: string): any[] {
     blocks.push({ id: 'fallback', type: 'paragraph', data: { text: 'Edit your email content here...' } })
   }
 
-  return blocks
+  return { blocks, productIndex }
 }
 
 // Convert Editor.js blocks to email-safe inline-styled HTML
@@ -197,7 +223,6 @@ function swapProductInHtml(html: string, product: any): string {
     }
   }
 
-  // Update Shop Now href
   const allLinks = doc.querySelectorAll('a')
   for (const link of Array.from(allLinks)) {
     const linkText = (link.textContent || '').trim().toLowerCase()
@@ -222,11 +247,12 @@ export default function EmailBlockEditor({ initialHtml, primaryColor, onHtmlChan
   const holderRef = useRef<HTMLDivElement>(null)
   const initializedRef = useRef(false)
   const htmlRef = useRef(initialHtml)
+  const productIndexRef = useRef(-1)
+  const portalContainerRef = useRef<HTMLDivElement | null>(null)
 
-  // Extract product info from the current HTML for the inline card
   const [productInfo, setProductInfo] = useState(() => extractProductInfo(initialHtml))
+  const [portalReady, setPortalReady] = useState(false)
 
-  // Detect which product is currently shown
   const detectCurrentProductId = (): string => {
     if (!productInfo || products.length === 0) return ''
     const lower = (productInfo.title || '').toLowerCase()
@@ -253,7 +279,6 @@ export default function EmailBlockEditor({ initialHtml, primaryColor, onHtmlChan
       const data = await editorRef.current.save()
       const contentHtml = blocksToEmailHtml(data.blocks, primaryColor)
 
-      // Extract the product section HTML from current full HTML to preserve it
       const currentDoc = new DOMParser().parseFromString(htmlRef.current, 'text/html')
       let productSectionHtml = ''
       const allLinks = currentDoc.querySelectorAll('a')
@@ -268,7 +293,6 @@ export default function EmailBlockEditor({ initialHtml, primaryColor, onHtmlChan
         }
       }
 
-      // Rebuild the full email, inserting the product section between content and footer
       const fullHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background:#f0f2f5;font-family:'Helvetica Neue',Arial,sans-serif;">
 <table width="100%" cellpadding="0" cellspacing="0" style="padding:24px 0;">
@@ -292,6 +316,33 @@ ${productSectionHtml ? `<div style="text-align:center;padding:20px 0;">${product
     } catch {}
   }, [primaryColor, onHtmlChange])
 
+  // Insert portal container at the correct position among Editor.js blocks
+  const insertPortalAtPosition = useCallback(() => {
+    if (!holderRef.current || productIndexRef.current < 0) return
+
+    // Remove existing portal container if any
+    if (portalContainerRef.current) {
+      portalContainerRef.current.remove()
+      portalContainerRef.current = null
+    }
+
+    const redactor = holderRef.current.querySelector('.codex-editor__redactor')
+    if (!redactor) return
+
+    const ceBlocks = redactor.querySelectorAll(':scope > .ce-block')
+    const container = document.createElement('div')
+    container.className = 'product-card-portal'
+
+    if (productIndexRef.current < ceBlocks.length) {
+      ceBlocks[productIndexRef.current].before(container)
+    } else {
+      redactor.appendChild(container)
+    }
+
+    portalContainerRef.current = container
+    setPortalReady(true)
+  }, [])
+
   useEffect(() => {
     if (initializedRef.current || !holderRef.current) return
     initializedRef.current = true
@@ -304,7 +355,8 @@ ${productSectionHtml ? `<div style="text-align:center;padding:20px 0;">${product
       const Delimiter = (await import('@editorjs/delimiter')).default
       const List = (await import('@editorjs/list')).default
 
-      const blocks = htmlToBlocks(initialHtml)
+      const { blocks, productIndex } = htmlToBlocks(initialHtml)
+      productIndexRef.current = productIndex
 
       editorRef.current = new EditorJS({
         holder: holderRef.current!,
@@ -327,21 +379,72 @@ ${productSectionHtml ? `<div style="text-align:center;padding:20px 0;">${product
         onChange: handleChange,
         placeholder: 'Start editing your email...',
         minHeight: 200,
+        onReady: () => {
+          // Insert portal container once Editor.js has rendered all blocks
+          setTimeout(insertPortalAtPosition, 50)
+        },
       })
     }
 
     initEditor()
 
     return () => {
+      if (portalContainerRef.current) {
+        portalContainerRef.current.remove()
+        portalContainerRef.current = null
+      }
       if (editorRef.current?.destroy) {
         editorRef.current.destroy()
         editorRef.current = null
         initializedRef.current = false
       }
+      setPortalReady(false)
     }
-  }, [initialHtml, handleChange])
+  }, [initialHtml, handleChange, insertPortalAtPosition])
 
   const currentProductId = detectCurrentProductId()
+
+  const productCard = productInfo ? (
+    <div className="bg-gray-50 rounded-xl border border-gray-200 p-3 my-2">
+      <p className="text-xs text-gray-400 font-medium mb-2">{'\uD83D\uDECD\uFE0F'} Product Block</p>
+      <div className="flex items-center gap-3 mb-3">
+        {productInfo.image ? (
+          <img
+            src={productInfo.image}
+            alt={productInfo.title}
+            className="w-[60px] h-[60px] rounded-lg object-cover border border-gray-200 flex-shrink-0"
+          />
+        ) : (
+          <div className="w-[60px] h-[60px] rounded-lg bg-gray-200 flex items-center justify-center flex-shrink-0">
+            <svg className="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+          </div>
+        )}
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-gray-900 truncate">{productInfo.title || 'Product'}</p>
+          {productInfo.price && (
+            <p className="text-sm font-bold text-blue-700">{productInfo.price}</p>
+          )}
+        </div>
+      </div>
+      {products.length > 0 && (
+        <div>
+          <label className="text-xs font-medium text-gray-500 block mb-1">Change Product</label>
+          <select
+            onChange={handleProductChange}
+            value={currentProductId}
+            className="w-full border border-gray-200 rounded-lg p-2 text-sm"
+          >
+            <option value="" disabled>Select a product...</option>
+            {products.map((p: any) => (
+              <option key={p.id} value={p.id.toString()}>
+                {p.title}{p.variants?.[0]?.price ? ` — $${p.variants[0].price}` : ''}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+    </div>
+  ) : null
 
   return (
     <div className="flex flex-col h-full">
@@ -351,50 +454,9 @@ ${productSectionHtml ? `<div style="text-align:center;padding:20px 0;">${product
       </div>
       <div className="flex-1 overflow-auto p-4">
         <div ref={holderRef} className="prose prose-sm max-w-none" />
-
-        {/* Inline Product Card Block */}
-        {productInfo && (
-          <div className="bg-gray-50 rounded-xl border border-gray-200 p-3 mb-3">
-            <p className="text-xs text-gray-400 font-medium mb-2">{'\uD83D\uDECD\uFE0F'} Product Block</p>
-            <div className="flex items-center gap-3 mb-3">
-              {productInfo.image ? (
-                <img
-                  src={productInfo.image}
-                  alt={productInfo.title}
-                  className="w-[60px] h-[60px] rounded-lg object-cover border border-gray-200 flex-shrink-0"
-                />
-              ) : (
-                <div className="w-[60px] h-[60px] rounded-lg bg-gray-200 flex items-center justify-center flex-shrink-0">
-                  <svg className="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                </div>
-              )}
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-gray-900 truncate">{productInfo.title || 'Product'}</p>
-                {productInfo.price && (
-                  <p className="text-sm font-bold text-blue-700">{productInfo.price}</p>
-                )}
-              </div>
-            </div>
-            {products.length > 0 && (
-              <div>
-                <label className="text-xs font-medium text-gray-500 block mb-1">Change Product</label>
-                <select
-                  onChange={handleProductChange}
-                  value={currentProductId}
-                  className="w-full border border-gray-200 rounded-lg p-2 text-sm"
-                >
-                  <option value="" disabled>Select a product...</option>
-                  {products.map((p: any) => (
-                    <option key={p.id} value={p.id.toString()}>
-                      {p.title}{p.variants?.[0]?.price ? ` — $${p.variants[0].price}` : ''}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-          </div>
-        )}
       </div>
+      {/* Portal: render product card at the correct position inside Editor.js block list */}
+      {portalReady && portalContainerRef.current && productCard && createPortal(productCard, portalContainerRef.current)}
     </div>
   )
 }
