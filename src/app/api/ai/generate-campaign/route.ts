@@ -103,20 +103,40 @@ ${discountStartDate ? `<p style="color:#9CA3AF;font-size:11px;margin:8px 0 0;fon
       ? `Valid from ${discountStartDate}${discountStartTime ? ' ' + discountStartTime : ''}${hasEndDate ? ' (limited time)' : ''}`
       : ''
 
-    const aiPrompt = `You are an expert email marketer. Generate compelling copy for an email campaign.
+    const aiPrompt = `You are a world-class email marketing designer and copywriter working for a premium Shopify brand.
 
-Campaign goal: ${prompt || 'General promotional campaign for ' + storeName}
-Store: ${storeName}
-Feature type: ${featureLabel}
-Featured product: ${productName} — $${productPrice}
-${discountCode ? `Discount: Code ${discountCode} for ${discountValue}% off` : 'No discount'}
-${discountDateInfo ? `Offer dates: ${discountDateInfo}` : ''}
+BRAND DATA:
+- Company: ${storeName}
+- Primary color: ${primaryColor}
+- Secondary color: ${secondaryColor}
+- Background color: ${bgColor}
+- Logo URL: ${logoUrl}
+- Font family: ${fontFamily}
+- Button shape: ${buttonShape}
 
-Write copy that:
-1. Has an attention-grabbing headline about: "${prompt || 'Special offer from ' + storeName}"
-2. Mentions "${productName}" by name and its $${productPrice} price
-3. Creates urgency for the customer to act now
-${discountCode ? `4. Highlights the discount code ${discountCode} (${discountValue}% off)${discountDateInfo ? ' — ' + discountDateInfo : ''}` : ''}
+PRODUCT DATA:
+- Product name: ${productName}
+- Product price: $${productPrice}
+- Product image: ${productImage}
+- Product URL: ${productUrl}
+
+CAMPAIGN DATA:
+- Goal: ${prompt || 'General promotional campaign for ' + storeName}
+- Feature type: ${featureLabel}
+${discountCode ? `- Discount code: ${discountCode}` : '- No discount'}
+${discountValue ? `- Discount value: ${discountValue}%` : ''}
+${discountDateInfo ? `- Discount dates: ${discountDateInfo}` : ''}
+
+DESIGN RULES — follow all of these:
+1. Analyze the brand colors and product to decide the best visual hierarchy for this specific campaign
+2. Headlines must be bold, specific, and benefit-driven — never generic like "Check out our products"
+3. Write the headline based on the actual product name "${productName}" and campaign goal
+4. CTA button must have urgency and be specific — never just "Shop Now", use things like "Get Yours Today", "Claim ${discountValue || '15'}% Off", "Shop ${productName}" etc based on context
+5. Body text must mention "${productName}" by name and its $${productPrice} price
+6. Create urgency for the customer to act now
+${discountCode ? `7. Highlight the discount code ${discountCode} (${discountValue}% off)${discountDateInfo ? ' — ' + discountDateInfo : ''}` : ''}
+8. If a discount code exists reference it prominently in the body copy
+9. Subject line must be compelling with an emoji and create curiosity
 
 Return ONLY a JSON object, no markdown, no backticks:
 {"subject":"email subject with emoji","headline":"main headline","body":"2-3 sentences body copy mentioning product and urgency","cta":"button text"}`
