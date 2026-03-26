@@ -11,7 +11,6 @@ const navItems = [
   { name: 'Campaigns', href: '/app/campaigns', icon: CampaignIcon },
   { name: 'Brand & Settings', href: '/app/settings', icon: SettingsIcon },
   { name: 'Contacts', href: '/app/contacts', icon: ContactsIcon },
-  { name: 'Referral', href: '/app/referral', icon: ReferralIcon },
 ]
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -111,10 +110,3 @@ function ContactsIcon({ active }: { active?: boolean }) {
   )
 }
 
-function ReferralIcon({ active }: { active?: boolean }) {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={active ? '#1E40AF' : '#6b7280'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" y1="2" x2="12" y2="15" />
-    </svg>
-  )
-}
