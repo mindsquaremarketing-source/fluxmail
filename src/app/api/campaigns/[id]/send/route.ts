@@ -75,8 +75,8 @@ export async function POST(
 
         const result = await resend.emails.send({
           from: store?.senderName
-            ? `${store.senderName} <onboarding@resend.dev>`
-            : 'Fluxmail <onboarding@resend.dev>',
+            ? `${store.senderName} <hello@tryfluxmail.com>`
+            : 'Fluxmail <hello@tryfluxmail.com>',
           to: contact.email,
           subject: campaign.subject,
           html: personalizedHtml,

@@ -107,7 +107,7 @@ export async function sendFlowEmail({
     // Send
     const resend = new Resend(process.env.RESEND_API_KEY)
     const result = await resend.emails.send({
-      from: `${store.senderName || templateData.storeName} <onboarding@resend.dev>`,
+      from: `${store.senderName || templateData.storeName} <hello@tryfluxmail.com>`,
       to: contactEmail,
       subject,
       html,

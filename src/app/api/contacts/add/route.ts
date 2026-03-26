@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
       const finalHtml = html.replace(/\{\{UNSUBSCRIBE_URL\}\}/g, unsubscribeUrl)
 
       await resend.emails.send({
-        from: `${store.senderName || store.companyName || 'Fluxmail'} <onboarding@resend.dev>`,
+        from: `${store.senderName || store.companyName || 'Fluxmail'} <hello@tryfluxmail.com>`,
         to: email,
         subject: `Welcome to ${store.companyName || 'Our Store'}! Here is 10% off`,
         html: finalHtml,

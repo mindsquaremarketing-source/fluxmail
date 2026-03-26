@@ -54,7 +54,7 @@ export default async function FlowEditorPage() {
     <FlowEditorClient
       templates={templates}
       storeName={data.storeName}
-      senderEmail={store?.replyToEmail || 'onboarding@resend.dev'}
+      senderEmail={store?.replyToEmail || 'hello@tryfluxmail.com'}
     />
   )
 }

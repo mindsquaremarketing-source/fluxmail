@@ -14,7 +14,7 @@ export async function sendEmail({
   from?: string
 }) {
   const { data, error } = await resend.emails.send({
-    from: from || 'Fluxmail <onboarding@resend.dev>',
+    from: from || 'Fluxmail <hello@tryfluxmail.com>',
     to,
     subject,
     html,
