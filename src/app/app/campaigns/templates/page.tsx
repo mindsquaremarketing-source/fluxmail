@@ -4,10 +4,14 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 
-const EmailBlockEditor = dynamic(() => import('@/components/EmailBlockEditor'), { ssr: false })
+// Fix 4: Lazy load the modal so it doesn't block initial page render
+const TemplatePreviewModal = dynamic(() => import('@/components/TemplatePreviewModal'), { ssr: false })
 
-const CACHE_KEY = 'fluxmail_campaign_templates'
 const CACHE_TTL = 30 * 60 * 1000 // 30 minutes
+
+function getCacheKey(storeId: string) {
+  return `fluxmail_templates_${storeId}`
+}
 
 export default function TemplatesPage() {
   const router = useRouter()
@@ -16,41 +20,57 @@ export default function TemplatesPage() {
   const [store, setStore] = useState<any>(null)
   const [products, setProducts] = useState<any[]>([])
   const [previewTemplate, setPreviewTemplate] = useState<any>(null)
-  const [previewHtml, setPreviewHtml] = useState('')
-  const [previewLoading, setPreviewLoading] = useState(false)
-  const [campaignName, setCampaignName] = useState('')
-  const [campaignSubject, setCampaignSubject] = useState('')
-  const [saving, setSaving] = useState(false)
   const [templatePreviews, setTemplatePreviews] = useState<Record<string, string>>({})
-  const [previewsReady, setPreviewsReady] = useState(false)
+
+  // Fix 5: Preload product images into browser cache
+  useEffect(() => {
+    if (products.length === 0) return
+    products.forEach((p: any) => {
+      const src = p.images?.[0]?.src
+      if (src) {
+        const img = new Image()
+        img.src = src
+      }
+    })
+  }, [products])
+
+  // Also preload store logo
+  useEffect(() => {
+    if (store?.logoUrl) {
+      const img = new Image()
+      img.src = store.logoUrl
+    }
+  }, [store])
 
   useEffect(() => { loadTemplates() }, [])
 
-  // Load from cache or generate fresh
+  // Fix 1: Load from per-store localStorage cache or generate fresh
   const loadTemplates = async () => {
     setLoading(true)
     try {
-      const cached = localStorage.getItem(CACHE_KEY)
-      if (cached) {
-        const { templates: ct, store: cs, products: cp, previews: cpv, timestamp } = JSON.parse(cached)
-        if (Date.now() - timestamp < CACHE_TTL && ct?.length > 0) {
-          setTemplates(ct)
-          setStore(cs)
-          setProducts(cp || [])
-          setTemplatePreviews(cpv || {})
-          setPreviewsReady(Object.keys(cpv || {}).length > 0)
-          setLoading(false)
-          return
+      // Check if we have a last known storeId to look up cache
+      const lastStoreId = localStorage.getItem('fluxmail_last_store_id')
+      if (lastStoreId) {
+        const cached = localStorage.getItem(getCacheKey(lastStoreId))
+        if (cached) {
+          const { templates: ct, store: cs, products: cp, previews: cpv, timestamp } = JSON.parse(cached)
+          if (Date.now() - timestamp < CACHE_TTL && ct?.length > 0) {
+            setTemplates(ct)
+            setStore(cs)
+            setProducts(cp || [])
+            setTemplatePreviews(cpv || {})
+            setLoading(false)
+            return
+          }
         }
       }
     } catch {}
     await generateFresh()
   }
 
-  // Fetch templates from AI API and pre-generate all previews
+  // Fix 2: Fetch templates from AI API and pre-generate all previews immediately
   const generateFresh = async () => {
     setLoading(true)
-    setPreviewsReady(false)
     try {
       const res = await fetch('/api/campaigns/templates')
       const data = await res.json()
@@ -58,6 +78,12 @@ export default function TemplatesPage() {
       setTemplates(tpls)
       setStore(data.store)
       setProducts(data.products || [])
+
+      // Save storeId for cache key lookup on next load
+      const storeId = data.store?.id
+      if (storeId) {
+        try { localStorage.setItem('fluxmail_last_store_id', storeId) } catch {}
+      }
 
       // Pre-generate all 6 previews in parallel
       const previews: Record<string, string> = {}
@@ -80,83 +106,56 @@ export default function TemplatesPage() {
       }))
 
       setTemplatePreviews(previews)
-      setPreviewsReady(true)
 
-      // Cache everything
-      try {
-        localStorage.setItem(CACHE_KEY, JSON.stringify({
-          templates: tpls,
-          store: data.store,
-          products: data.products || [],
-          previews,
-          timestamp: Date.now(),
-        }))
-      } catch {}
+      // Cache everything with per-store key
+      if (storeId) {
+        try {
+          localStorage.setItem(getCacheKey(storeId), JSON.stringify({
+            templates: tpls,
+            store: data.store,
+            products: data.products || [],
+            previews,
+            timestamp: Date.now(),
+          }))
+        } catch {}
+      }
     } catch {}
     finally { setLoading(false) }
   }
 
   // Regenerate button — clear cache and start fresh
   const handleRegenerate = () => {
-    try { localStorage.removeItem(CACHE_KEY) } catch {}
+    const storeId = store?.id
+    if (storeId) {
+      try { localStorage.removeItem(getCacheKey(storeId)) } catch {}
+    }
     setTemplatePreviews({})
     generateFresh()
   }
 
-  // Open modal instantly with pre-loaded preview
+  // Fix 2: Open modal instantly with pre-loaded preview from previewHtmlMap
   const handleSelectTemplate = (template: any) => {
     setPreviewTemplate(template)
-    setCampaignName(template.name)
-    setCampaignSubject(template.subject)
-    const cached = templatePreviews[template.id]
-    if (cached) {
-      setPreviewHtml(cached)
-      setPreviewLoading(false)
-    } else {
-      setPreviewHtml('')
-      setPreviewLoading(true)
-      // Fallback: generate on demand if somehow not pre-loaded
-      fetch('/api/ai/generate-campaign', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt: `${template.description}. Headline: ${template.headline}. Body: ${template.bodyText}. CTA: ${template.ctaText}.`,
-          discountCode: template.discountCode || '',
-          discountValue: template.discountValue || '',
-          templateName: template.name,
-          previewOnly: true,
-        })
-      })
-        .then(r => r.json())
-        .then(data => { if (data.html) setPreviewHtml(data.html) })
-        .catch(() => {})
-        .finally(() => setPreviewLoading(false))
-    }
   }
 
-  const handleSave = async () => {
-    if (!previewHtml) return
-    setSaving(true)
+  const handleSave = async (name: string, subject: string, html: string) => {
     try {
       const res = await fetch('/api/campaigns', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: campaignName, subject: campaignSubject, htmlContent: previewHtml, status: 'draft' })
+        body: JSON.stringify({ name, subject, htmlContent: html, status: 'draft' })
       })
       const data = await res.json()
       if (data.campaign?.id || data.success) router.push('/app/campaigns')
     } catch {}
-    finally { setSaving(false) }
   }
 
-  const handleSendNow = async () => {
-    if (!previewHtml) return
-    setSaving(true)
+  const handleSendNow = async (name: string, subject: string, html: string) => {
     try {
       const res = await fetch('/api/campaigns', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: campaignName, subject: campaignSubject, htmlContent: previewHtml, status: 'draft' })
+        body: JSON.stringify({ name, subject, htmlContent: html, status: 'draft' })
       })
       const data = await res.json()
       const id = data.campaign?.id
@@ -171,7 +170,6 @@ export default function TemplatesPage() {
         }
       }
     } catch {}
-    finally { setSaving(false) }
   }
 
   const cc: Record<string, string> = {
@@ -225,6 +223,7 @@ export default function TemplatesPage() {
           </div>
         )}
 
+        {/* Fix 3: Skeleton loading cards on first load */}
         {loading ? (
           <div className="grid grid-cols-3 gap-6">
             {[1, 2, 3, 4, 5, 6].map(i => (
@@ -268,82 +267,17 @@ export default function TemplatesPage() {
         )}
       </div>
 
-      {/* Preview Modal */}
+      {/* Fix 4: Lazy-loaded preview modal */}
       {previewTemplate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[95vh] flex flex-col overflow-hidden">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 flex-shrink-0">
-              <div className="flex items-center gap-3">
-                <button onClick={() => setPreviewTemplate(null)} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-                </button>
-                <div>
-                  <h2 className="font-bold text-gray-900">{previewTemplate.name}</h2>
-                  <p className="text-xs text-gray-500">Preview and customize your email</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <button onClick={() => setPreviewTemplate(null)} className="px-4 py-2 text-sm border border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50">Cancel</button>
-                <button onClick={handleSave} disabled={saving || previewLoading || !previewHtml}
-                  className="px-4 py-2 text-sm font-semibold border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-50 disabled:opacity-50">
-                  {saving ? 'Saving...' : 'Save as Draft'}
-                </button>
-                <button onClick={handleSendNow} disabled={saving || previewLoading || !previewHtml}
-                  className="px-4 py-2 text-sm font-bold bg-blue-700 text-white rounded-xl hover:bg-blue-800 disabled:opacity-50 flex items-center gap-2 shadow-lg shadow-blue-200">
-                  {saving ? (
-                    <><svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/></svg>Sending...</>
-                  ) : (
-                    <><svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>Send Now</>
-                  )}
-                </button>
-              </div>
-            </div>
-            <div className="px-6 py-3 border-b border-gray-100 bg-gray-50 flex-shrink-0">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Campaign Name</label>
-                  <input type="text" value={campaignName} onChange={e => setCampaignName(e.target.value)}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white" />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Subject Line</label>
-                  <input type="text" value={campaignSubject} onChange={e => setCampaignSubject(e.target.value)}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white" />
-                </div>
-              </div>
-            </div>
-            <div className="flex-1 overflow-hidden flex">
-              <div className="flex-1 overflow-auto bg-gray-100 p-6">
-                {previewLoading ? (
-                  <div className="flex items-center justify-center h-full">
-                    <div className="text-center">
-                      <svg className="animate-spin h-10 w-10 text-blue-600 mx-auto mb-4" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
-                      </svg>
-                      <p className="text-gray-500 font-medium">Generating branded email...</p>
-                      <p className="text-gray-400 text-sm mt-1">Using your logo, colors &amp; products</p>
-                    </div>
-                  </div>
-                ) : previewHtml ? (
-                  <iframe key={previewHtml.length} srcDoc={previewHtml} className="w-full bg-white rounded-xl shadow-lg"
-                    style={{ maxWidth: '650px', height: '550px', border: 'none', display: 'block', margin: '0 auto' }} title="Preview" />
-                ) : (
-                  <div className="flex items-center justify-center h-full"><p className="text-gray-400">Failed to generate preview</p></div>
-                )}
-              </div>
-              <div className="w-96 border-l border-gray-200 flex flex-col bg-white flex-shrink-0">
-                {previewHtml && !previewLoading && (
-                  <EmailBlockEditor
-                    initialHtml={previewHtml}
-                    primaryColor={store?.primaryColor || '#1E40AF'}
-                    onHtmlChange={setPreviewHtml}
-                  />
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
+        <TemplatePreviewModal
+          template={previewTemplate}
+          store={store}
+          initialHtml={templatePreviews[previewTemplate.id] || ''}
+          initialLoading={!templatePreviews[previewTemplate.id]}
+          onClose={() => setPreviewTemplate(null)}
+          onSave={handleSave}
+          onSendNow={handleSendNow}
+        />
       )}
     </div>
   )

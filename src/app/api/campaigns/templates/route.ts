@@ -67,7 +67,7 @@ Make them specific to ${storeName} and their products. Categories should be vari
 
     return NextResponse.json({
       templates,
-      store: { name: storeName, primaryColor, logoUrl: store.logoUrl || '', website: store.website || '#' },
+      store: { id: store.id, name: storeName, primaryColor, logoUrl: store.logoUrl || '', website: store.website || '#' },
       products
     })
   } catch (error: any) {
