@@ -22,5 +22,7 @@ export async function GET(req: NextRequest) {
     rawRequest: req,
   })
 
+  console.log('Shopify OAuth redirect URL:', authRoute.headers.get('location'))
+
   return authRoute
 }
