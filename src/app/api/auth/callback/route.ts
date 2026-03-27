@@ -45,27 +45,36 @@ export async function GET(req: NextRequest) {
       console.error('Contacts sync failed:', e)
     }
 
-    // Register popup script tag on install
+    // Register popup script tag on install (wrapped in try/catch so it never breaks auth)
     try {
       const storeRecord = await prisma.store.findUnique({ where: { shopDomain: session.shop } })
       if (storeRecord) {
-        await fetch(`https://${shop}/admin/api/2024-01/script_tags.json`, {
+        const scriptRes = await fetch(`https://${shop}/admin/api/2024-01/graphql.json`, {
           method: 'POST',
           headers: {
             'X-Shopify-Access-Token': session.accessToken!,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            script_tag: {
-              event: 'onload',
-              src: `${appHost}/api/popup/script?storeId=${storeRecord.id}`,
-            },
+            query: `mutation scriptTagCreate($input: ScriptTagInput!) {
+              scriptTagCreate(input: $input) {
+                scriptTag { id src }
+                userErrors { field message }
+              }
+            }`,
+            variables: {
+              input: {
+                src: `${appHost}/api/popup/script?storeId=${storeRecord.id}`,
+                displayScope: "ALL"
+              }
+            }
           }),
         })
-        console.log('Popup script tag registered on install')
+        const scriptData = await scriptRes.json()
+        console.log('Script tag registration response:', JSON.stringify(scriptData, null, 2))
       }
     } catch (e) {
-      console.error('Script tag registration failed:', e)
+      console.error('Script tag registration failed silently:', e)
     }
 
     return NextResponse.redirect(
