@@ -45,6 +45,29 @@ export async function GET(req: NextRequest) {
       console.error('Contacts sync failed:', e)
     }
 
+    // Register popup script tag on install
+    try {
+      const storeRecord = await prisma.store.findUnique({ where: { shopDomain: session.shop } })
+      if (storeRecord) {
+        await fetch(`https://${shop}/admin/api/2024-01/script_tags.json`, {
+          method: 'POST',
+          headers: {
+            'X-Shopify-Access-Token': session.accessToken!,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            script_tag: {
+              event: 'onload',
+              src: `${appHost}/api/popup/script?storeId=${storeRecord.id}`,
+            },
+          }),
+        })
+        console.log('Popup script tag registered on install')
+      }
+    } catch (e) {
+      console.error('Script tag registration failed:', e)
+    }
+
     return NextResponse.redirect(
       `https://${shop}/admin/apps/fluxmail/app/dashboard`
     )

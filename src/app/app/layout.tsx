@@ -11,6 +11,7 @@ const navItems = [
   { name: 'Campaigns', href: '/app/campaigns', icon: CampaignIcon },
   { name: 'Brand & Settings', href: '/app/settings', icon: SettingsIcon },
   { name: 'Contacts', href: '/app/contacts', icon: ContactsIcon },
+  { name: 'Popup', href: '/app/popup', icon: PopupIcon },
   { name: 'Billing', href: '/app/billing', icon: BillingIcon },
 ]
 
@@ -144,6 +145,14 @@ function ContactsIcon({ active }: { active?: boolean }) {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={active ? '#1E40AF' : '#6b7280'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  )
+}
+
+function PopupIcon({ active }: { active?: boolean }) {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={active ? '#1E40AF' : '#6b7280'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 4h16v12H5.17L4 17.17V4z" /><path d="M12 8v1" /><path d="M12 12h.01" />
     </svg>
   )
 }
