@@ -44,7 +44,10 @@ export async function GET(req: NextRequest) {
   // Save store to database
   const storeRecord = await prisma.store.upsert({
     where: { shopDomain: shop },
-    update: { accessToken },
+    update: {
+      accessToken,
+      billingStatus: 'trial',
+    },
     create: {
       shopDomain: shop,
       accessToken,
@@ -52,6 +55,7 @@ export async function GET(req: NextRequest) {
       trialStartDate: new Date(),
     },
   })
+  console.log('Store upserted with new token preview:', accessToken?.substring(0, 12))
 
   const appHost = process.env.HOST || 'https://fluxmail-silk.vercel.app'
 
@@ -96,7 +100,6 @@ export async function GET(req: NextRequest) {
   }
 
   // Redirect to app
-  return NextResponse.redirect(
-    `https://${shop}/admin/apps/fluxmail/app/dashboard`
-  )
+  const redirectUrl = `https://${shop}/admin/apps/fluxmail`
+  return NextResponse.redirect(redirectUrl)
 }

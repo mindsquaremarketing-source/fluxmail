@@ -9,6 +9,7 @@ export async function POST(req: NextRequest) {
     if (!store) {
       return NextResponse.json({ error: 'Store not found' }, { status: 404 })
     }
+    console.log('Register script using token preview:', store.accessToken?.substring(0, 12))
 
     const appHost = process.env.HOST || 'https://fluxmail-silk.vercel.app'
     const scriptSrc = `${appHost}/api/popup/script?storeId=${store.id}`
