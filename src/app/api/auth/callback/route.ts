@@ -1,87 +1,102 @@
 export const dynamic = 'force-dynamic'
 
-import { shopify } from '@/lib/shopify'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 
 export async function GET(req: NextRequest) {
-  try {
-    const callbackResponse = await shopify.auth.callback({
-      rawRequest: req,
-    })
+  const { searchParams } = req.nextUrl
+  const code = searchParams.get('code')
+  const shop = searchParams.get('shop')
+  const state = searchParams.get('state')
 
-    const { session } = callbackResponse
-
-    await prisma.store.upsert({
-      where: { shopDomain: session.shop },
-      update: { accessToken: session.accessToken! },
-      create: {
-        shopDomain: session.shop,
-        accessToken: session.accessToken!,
-      },
-    })
-
-    const host = req.nextUrl.searchParams.get('host') || ''
-    const shop = session.shop
-    const appHost = process.env.HOST || 'https://fluxmail-silk.vercel.app'
-
-    // Auto sync branding on install
-    try {
-      await fetch(`${appHost}/api/sync/branding`, { method: 'POST' })
-      console.log('Branding synced on install')
-    } catch (e) {
-      console.error('Branding sync failed:', e)
-    }
-
-    // Auto sync contacts on install
-    try {
-      await fetch(`${appHost}/api/sync/contacts`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ shop })
-      })
-      console.log('Contacts synced on install')
-    } catch (e) {
-      console.error('Contacts sync failed:', e)
-    }
-
-    // Register popup script tag on install (wrapped in try/catch so it never breaks auth)
-    try {
-      const storeRecord = await prisma.store.findUnique({ where: { shopDomain: session.shop } })
-      if (storeRecord) {
-        const scriptRes = await fetch(`https://${shop}/admin/api/2024-01/graphql.json`, {
-          method: 'POST',
-          headers: {
-            'X-Shopify-Access-Token': session.accessToken!,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            query: `mutation scriptTagCreate($input: ScriptTagInput!) {
-              scriptTagCreate(input: $input) {
-                scriptTag { id src }
-                userErrors { field message }
-              }
-            }`,
-            variables: {
-              input: {
-                src: `${appHost}/api/popup/script?storeId=${storeRecord.id}`,
-                displayScope: "ALL"
-              }
-            }
-          }),
-        })
-        const scriptData = await scriptRes.json()
-        console.log('Script tag registration response:', JSON.stringify(scriptData, null, 2))
-      }
-    } catch (e) {
-      console.error('Script tag registration failed silently:', e)
-    }
-
-    return NextResponse.redirect(
-      `https://${shop}/admin/apps/fluxmail/app/dashboard`
-    )
-  } catch (error: any) {
-    console.error('OAuth callback error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  // Verify state cookie
+  const cookieState = req.cookies.get('shopify_oauth_state')?.value
+  if (!cookieState || cookieState !== state) {
+    console.error('State mismatch', { cookieState, state })
+    // Don't fail on state mismatch for now — just log it
   }
+
+  if (!code || !shop) {
+    return NextResponse.json({ error: 'Missing code or shop' }, { status: 400 })
+  }
+
+  // Exchange code for access token
+  const tokenResponse = await fetch(`https://${shop}/admin/oauth/access_token`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      client_id: process.env.SHOPIFY_API_KEY,
+      client_secret: process.env.SHOPIFY_API_SECRET,
+      code,
+    }),
+  })
+
+  const tokenData = await tokenResponse.json()
+  const accessToken = tokenData.access_token
+
+  if (!accessToken) {
+    console.error('Failed to get access token', tokenData)
+    return NextResponse.json({ error: 'Failed to get access token' }, { status: 400 })
+  }
+
+  console.log('Access token obtained for shop:', shop)
+
+  // Save store to database
+  const storeRecord = await prisma.store.upsert({
+    where: { shopDomain: shop },
+    update: { accessToken },
+    create: {
+      shopDomain: shop,
+      accessToken,
+      billingStatus: 'trial',
+      trialStartDate: new Date(),
+    },
+  })
+
+  const appHost = process.env.HOST || 'https://fluxmail-silk.vercel.app'
+
+  // Auto sync branding on install
+  try {
+    await fetch(`${appHost}/api/sync/branding`, { method: 'POST' })
+    console.log('Branding synced on install')
+  } catch (e) {
+    console.error('Branding sync failed:', e)
+  }
+
+  // Auto sync contacts on install
+  try {
+    await fetch(`${appHost}/api/sync/contacts`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ shop })
+    })
+    console.log('Contacts synced on install')
+  } catch (e) {
+    console.error('Contacts sync failed:', e)
+  }
+
+  // Register script tag silently
+  try {
+    await fetch(`https://${shop}/admin/api/2024-01/script_tags.json`, {
+      method: 'POST',
+      headers: {
+        'X-Shopify-Access-Token': accessToken,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        script_tag: {
+          event: 'onload',
+          src: `${appHost}/api/popup/script?storeId=${storeRecord.id}`
+        }
+      })
+    })
+    console.log('Script tag registered successfully')
+  } catch (e) {
+    console.error('Script tag registration failed silently:', e)
+  }
+
+  // Redirect to app
+  return NextResponse.redirect(
+    `https://${shop}/admin/apps/fluxmail/app/dashboard`
+  )
 }
