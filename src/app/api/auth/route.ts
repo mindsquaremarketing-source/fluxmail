@@ -3,6 +3,8 @@ export const dynamic = 'force-dynamic'
 import { shopify } from '@/lib/shopify'
 import { NextRequest, NextResponse } from 'next/server'
 
+const SCOPES = 'read_customers,write_customers,read_orders,write_orders,read_products,write_script_tags,read_script_tags'
+
 export async function GET(req: NextRequest) {
   const shop = req.nextUrl.searchParams.get('shop')
 
@@ -15,14 +17,13 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid shop parameter' }, { status: 400 })
   }
 
-  const authRoute = await shopify.auth.begin({
-    shop: sanitizedShop,
-    callbackPath: '/api/auth/callback',
-    isOnline: false,
-    rawRequest: req,
-  })
+  const appHost = process.env.HOST || 'https://fluxmail-silk.vercel.app'
+  const redirectUri = `${appHost}/api/auth/callback`
+  const nonce = crypto.randomUUID()
 
-  console.log('Shopify OAuth redirect URL:', authRoute.headers.get('location'))
+  const authUrl = `https://${sanitizedShop}/admin/oauth/authorize?client_id=${process.env.SHOPIFY_API_KEY}&scope=${SCOPES}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${nonce}`
 
-  return authRoute
+  console.log('Shopify OAuth redirect URL:', authUrl)
+
+  return NextResponse.redirect(authUrl)
 }
