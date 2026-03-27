@@ -4,15 +4,15 @@ import { useState } from 'react'
 import { useApp } from '@/lib/app-context'
 
 const PLANS = [
-  { name: 'STARTER',    price: 7.99,   contacts: 500 },
-  { name: 'BASIC',      price: 9.99,   contacts: 1000 },
-  { name: 'PRO',        price: 14.99,  contacts: 2500 },
-  { name: 'BUSINESS',   price: 24.99,  contacts: 5000 },
-  { name: 'GROWTH',     price: 39.99,  contacts: 10000,  popular: true },
-  { name: 'ADVANCED',   price: 59.99,  contacts: 25000 },
-  { name: 'PREMIUM',    price: 89.99,  contacts: 50000 },
-  { name: 'ENTERPRISE', price: 139.99, contacts: 100000 },
-  { name: 'SCALE',      price: 224.99, contacts: 200000 },
+  { name: 'STARTER',    price: 7.49,    contacts: 500 },
+  { name: 'BASIC',      price: 9.99,    contacts: 1000 },
+  { name: 'PRO',        price: 21.99,   contacts: 2500 },
+  { name: 'BUSINESS',   price: 39.99,   contacts: 5000 },
+  { name: 'GROWTH',     price: 66.00,   contacts: 10000,  popular: true },
+  { name: 'ADVANCED',   price: 141.00,  contacts: 25000 },
+  { name: 'PREMIUM',    price: 206.50,  contacts: 50000 },
+  { name: 'ENTERPRISE', price: 450.00,  contacts: 100000 },
+  { name: 'SCALE',      price: 1000.00, contacts: 200000 },
 ]
 
 const FEATURES = [

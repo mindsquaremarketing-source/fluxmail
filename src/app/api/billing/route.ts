@@ -4,15 +4,15 @@ import { prisma } from '@/lib/db'
 export const dynamic = 'force-dynamic'
 
 const PLANS: Record<string, { price: number; contacts: number }> = {
-  STARTER:    { price: 7.99,   contacts: 500 },
-  BASIC:      { price: 9.99,   contacts: 1000 },
-  PRO:        { price: 14.99,  contacts: 2500 },
-  BUSINESS:   { price: 24.99,  contacts: 5000 },
-  GROWTH:     { price: 39.99,  contacts: 10000 },
-  ADVANCED:   { price: 59.99,  contacts: 25000 },
-  PREMIUM:    { price: 89.99,  contacts: 50000 },
-  ENTERPRISE: { price: 139.99, contacts: 100000 },
-  SCALE:      { price: 224.99, contacts: 200000 },
+  STARTER:    { price: 7.49,    contacts: 500 },
+  BASIC:      { price: 9.99,    contacts: 1000 },
+  PRO:        { price: 21.99,   contacts: 2500 },
+  BUSINESS:   { price: 39.99,   contacts: 5000 },
+  GROWTH:     { price: 66.00,   contacts: 10000 },
+  ADVANCED:   { price: 141.00,  contacts: 25000 },
+  PREMIUM:    { price: 206.50,  contacts: 50000 },
+  ENTERPRISE: { price: 450.00,  contacts: 100000 },
+  SCALE:      { price: 1000.00, contacts: 200000 },
 }
 
 export async function POST(req: NextRequest) {
