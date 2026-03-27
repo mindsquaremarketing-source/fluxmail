@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { AppProvider, useApp } from '@/lib/app-context'
+import { AppProvider } from '@/lib/app-context'
+import TrialBanner from './TrialBanner'
 
 const navItems = [
   { name: 'Dashboard', href: '/app/dashboard', icon: DashboardIcon },
@@ -14,34 +15,6 @@ const navItems = [
   { name: 'Popup', href: '/app/popup', icon: PopupIcon },
   { name: 'Billing', href: '/app/billing', icon: BillingIcon },
 ]
-
-function TrialBanner() {
-  const { state } = useApp()
-  const store = state.store
-  const billingStatus = store?.billingStatus
-
-  // Show banner when on trial OR when billingStatus is null (pre-existing stores)
-  if (!store || (billingStatus && billingStatus !== 'trial')) return null
-
-  const trialStart = store.trialStartDate ? new Date(store.trialStartDate) : new Date()
-  const now = new Date()
-  const daysSinceStart = Math.floor((now.getTime() - trialStart.getTime()) / (1000 * 60 * 60 * 24))
-  const daysRemaining = Math.max(0, 30 - daysSinceStart)
-
-  return (
-    <div className="w-full bg-blue-600 text-white px-4 py-2 flex items-center justify-between text-sm z-50">
-      <span>
-        🎉 You are on a 30-day free trial — {daysRemaining} days remaining
-      </span>
-      <a
-        href="/app/billing"
-        className="bg-white text-blue-600 px-3 py-1 rounded-lg font-semibold text-xs"
-      >
-        Choose Plan
-      </a>
-    </div>
-  )
-}
 
 function AppLayoutInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
