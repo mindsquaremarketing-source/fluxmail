@@ -5,11 +5,12 @@ export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
   try {
-    const store = await prisma.store.findFirst({ orderBy: { createdAt: 'desc' } })
+    console.log('Register script called for shop')
+    const store = await prisma.store.findFirst({ orderBy: { updatedAt: 'desc' } })
     if (!store) {
       return NextResponse.json({ error: 'Store not found' }, { status: 404 })
     }
-    console.log('Register script using token preview:', store.accessToken?.substring(0, 12))
+    console.log('Found store:', store.shopDomain, 'token preview:', store.accessToken?.substring(0, 12))
 
     const appHost = process.env.HOST || 'https://fluxmail-silk.vercel.app'
     const scriptSrc = `${appHost}/api/popup/script?storeId=${store.id}`

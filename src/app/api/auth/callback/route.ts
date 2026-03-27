@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { invalidateStoreCache } from '@/lib/store-cache'
 
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl
@@ -55,6 +56,7 @@ export async function GET(req: NextRequest) {
       trialStartDate: new Date(),
     },
   })
+  invalidateStoreCache()
   console.log('Store upserted with new token preview:', accessToken?.substring(0, 12))
 
   const appHost = process.env.HOST || 'https://fluxmail-silk.vercel.app'
