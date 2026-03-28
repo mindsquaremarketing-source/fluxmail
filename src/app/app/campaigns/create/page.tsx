@@ -32,6 +32,7 @@ export default function CreateCampaignPage() {
   const [productName, setProductName] = useState('')
   const [productImage, setProductImage] = useState('')
   const [productPrice, setProductPrice] = useState('')
+  const [selectedProduct, setSelectedProduct] = useState<{ title: string; price: string; image: string; url: string } | null>(null)
   const [products, setProducts] = useState<any[]>([])
   const [generating, setGenerating] = useState(false)
   const [generated, setGenerated] = useState<GeneratedCampaign | null>(null)
@@ -103,6 +104,12 @@ export default function CreateCampaignPage() {
           productName,
           productImage,
           productPrice,
+          selectedProduct: selectedProduct ? {
+            title: selectedProduct.title,
+            price: selectedProduct.price,
+            image: selectedProduct.image,
+            url: selectedProduct.url,
+          } : null,
           discountCode: discountMethod === 'code' ? discountCode : '',
           discountValue: discountMethod === 'code' ? discountValue : '',
           discountStartDate: startDate,
@@ -282,6 +289,12 @@ export default function CreateCampaignPage() {
                       setProductName(product.title)
                       setProductImage(product.images?.[0]?.src || '')
                       setProductPrice(product.variants?.[0]?.price || '')
+                      setSelectedProduct({
+                        title: product.title,
+                        price: product.variants?.[0]?.price || product.price || '',
+                        image: product.images?.[0]?.src || product.image || '',
+                        url: product.handle ? `https://${window.location.hostname}/products/${product.handle}` : '',
+                      })
                     }
                   }}
                   className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"

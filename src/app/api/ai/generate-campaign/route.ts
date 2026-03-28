@@ -16,6 +16,7 @@ export async function POST(req: NextRequest) {
       productName: inputProductName,
       productImage: inputProductImage,
       productPrice: inputProductPrice,
+      selectedProduct: inputSelectedProduct,
       discountCode,
       discountValue,
       discountStartDate,
@@ -24,6 +25,9 @@ export async function POST(req: NextRequest) {
       templateName,
       previewOnly,
     } = body
+
+    console.log('Received selectedProduct:', JSON.stringify(inputSelectedProduct))
+    console.log('Received description:', prompt)
 
     const store = await prisma.store.findFirst({ orderBy: { createdAt: 'desc' } })
     if (!store) return NextResponse.json({ error: 'No store found' }, { status: 404 })
@@ -66,11 +70,11 @@ export async function POST(req: NextRequest) {
       }
     } catch {}
 
-    const productName = featuredProduct?.title || inputProductName || 'Featured Product'
-    const productImage = featuredProduct?.images?.[0]?.src || inputProductImage || ''
-    const productPrice = featuredProduct?.variants?.[0]?.price || inputProductPrice || '0.00'
-    const productUrl = featuredProduct?.handle ? `${website}/products/${featuredProduct.handle}` : website
-    const featureLabel = featureType === 'collection' ? 'Collection' : featureType === 'all' ? 'All Products' : 'Product'
+    // Prioritize the full selectedProduct object from the client over Shopify re-fetch
+    const productName = inputSelectedProduct?.title || featuredProduct?.title || inputProductName || 'Featured Product'
+    const productImage = inputSelectedProduct?.image || featuredProduct?.images?.[0]?.src || inputProductImage || ''
+    const productPrice = inputSelectedProduct?.price || featuredProduct?.variants?.[0]?.price || inputProductPrice || '0.00'
+    const productUrl = inputSelectedProduct?.url || (featuredProduct?.handle ? `${website}/products/${featuredProduct.handle}` : website)
 
     // Build logo HTML
     const logoHtml = logoUrl
@@ -201,7 +205,8 @@ IMPORTANT RULES:
       messages: [{ role: 'user', content: aiPrompt }]
     })
 
-    const text = response.content[0].type === 'text' ? response.content[0].text : '{}'
+    const firstBlock = response.content[0]
+    const text = firstBlock?.type === 'text' ? firstBlock.text : '{}'
     let subject = `${storeName} - Special Offer`
     let headline = `Special Offer from ${storeName}`
     let bodyText = `Check out our amazing products at ${storeName}.`
